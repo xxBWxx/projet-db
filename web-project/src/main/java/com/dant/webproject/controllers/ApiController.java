@@ -22,10 +22,10 @@ public class ApiController {
 
     @GetMapping("/select")
     public ResponseEntity<?> selectData(@RequestParam("table") String table,
-            @RequestParam("columns") List<String> columns,
-            @RequestParam("conditions") Map<String, String> conditions) {
+            @RequestParam("columns") List<String> columns /*,
+            @RequestParam("conditions") Map<String, String> conditions*/) {
         try {
-            List<Map<String, Object>> results = databaseService.select(table, columns, conditions);
+            List<Map<String, Object>> results = databaseService.select(table, columns);
             return ResponseEntity.ok(results);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
