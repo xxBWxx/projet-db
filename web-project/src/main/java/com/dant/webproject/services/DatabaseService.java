@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.avro.generic.GenericRecord;
-import org.apache.parquet.avro.AvroParquetReader;
-import org.apache.parquet.column.page.PageReadStore;
-import org.apache.parquet.example.data.simple.SimpleGroup;
-import org.apache.parquet.example.data.simple.convert.GroupRecordConverter;
-import org.apache.parquet.hadoop.ParquetFileReader;
-import org.apache.parquet.hadoop.ParquetReader;
+// import org.apache.avro.generic.GenericRecord;
+// import org.apache.parquet.avro.AvroParquetReader;
+// import org.apache.parquet.column.page.PageReadStore;
+// import org.apache.parquet.example.data.simple.SimpleGroup;
+// import org.apache.parquet.example.data.simple.convert.GroupRecordConverter;
+// import org.apache.parquet.hadoop.ParquetFileReader;
+// import org.apache.parquet.hadoop.ParquetReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -29,8 +29,9 @@ import org.apache.parquet.io.ColumnIOFactory;
 import org.apache.parquet.io.InputFile;
 import org.apache.parquet.io.MessageColumnIO;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
+// import org.apache.hadoop.conf.Configuration;
+// import org.apache.hadoop.fs.Path;
+
 import org.apache.parquet.column.page.PageReadStore;
 import org.apache.parquet.example.data.simple.SimpleGroup;
 import org.apache.parquet.example.data.simple.convert.GroupRecordConverter;
@@ -127,22 +128,24 @@ public class DatabaseService {
     }
 
     // TODO : URGENT (read a .parquet file and parse it to json)
-    public void test() throws IllegalArgumentException, IOException {
-        List<SimpleGroup> simpleGroups = new ArrayList<>();
-        ParquetFileReader reader = ParquetFileReader
-                .open(HadoopInputFile.fromPath(new Path("yellow_tripdata_2012-01.parquet"), new Configuration()));
-        MessageType schema = reader.getFooter().getFileMetaData().getSchema();
-        List<Type> fields = schema.getFields();
-        PageReadStore pages;
-        while ((pages = reader.readNextRowGroup()) != null) {
-            long rows = pages.getRowCount();
-            MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
-            RecordReader recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema));
+    // public void test() throws IllegalArgumentException, IOException {
+    // List<SimpleGroup> simpleGroups = new ArrayList<>();
+    // ParquetFileReader reader = ParquetFileReader
+    // .open(HadoopInputFile.fromPath(new Path("yellow_tripdata_2012-01.parquet"),
+    // new Configuration()));
+    // MessageType schema = reader.getFooter().getFileMetaData().getSchema();
+    // List<Type> fields = schema.getFields();
+    // PageReadStore pages;
+    // while ((pages = reader.readNextRowGroup()) != null) {
+    // long rows = pages.getRowCount();
+    // MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
+    // RecordReader recordReader = columnIO.getRecordReader(pages, new
+    // GroupRecordConverter(schema));
 
-            for (int i = 0; i < rows; i++) {
-                SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
-                simpleGroups.add(simpleGroup);
-            }
-        }
-    }
+    // for (int i = 0; i < rows; i++) {
+    // SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
+    // simpleGroups.add(simpleGroup);
+    // }
+    // }
+    // }
 }

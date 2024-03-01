@@ -23,11 +23,11 @@
 			<artifactId>parquet-avro</artifactId>
 			<version>1.10.0</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-common</artifactId>
 			<version>3.1.0</version>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
