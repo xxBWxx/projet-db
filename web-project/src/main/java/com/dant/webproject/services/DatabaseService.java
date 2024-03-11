@@ -127,6 +127,229 @@ public class DatabaseService {
         return database;
     }
 
+
+
+
+    //----------travaux DIAKITE 11/03-------------//
+
+
+
+    //ajout de méthode pour select toutes les lignes avec un nom donné
+    public List<String> select_elem(String table, String columnName, String nomelem) {
+
+        List<String> results=new ArrayList<String>();
+
+        // Vérifier si la table existe dans la base de données
+        if (!database.containsKey(table)) {
+            throw new IllegalArgumentException("Table non trouvée dans la base de données");
+        }
+
+        // Récupérer les données de la table
+        Map<String, List<String>> tableData = database.get(table);
+
+
+        // Vérifier si la colonne existe dans les données de la table
+        if (!tableData.containsKey(columnName)) {
+            throw new IllegalArgumentException("La colonne " + columnName + " n'existe pas dans la table");
+        }
+
+        //récupérer la colonne
+        List<String> col=tableData.get(columnName);
+
+        for( String elt : col){
+            if(elt.equals(nomelem))results.add(elt);
+        }
+
+        return results;
+
+    }
+
+    //ajout de méthode pour supprimer une liste de colonnes passé en argument
+    public void deleteColumn(String table, List<String> columnNames) {
+        // Vérifier si la table existe dans la base de données
+        if (!database.containsKey(table)) {
+            throw new IllegalArgumentException("Table non trouvée dans la base de données");
+        }
+
+        // Récupérer les données de la table
+        Map<String, List<String>> tableData = database.get(table);
+
+        for (Map.Entry<String, List<String>> entry : tableData.entrySet()) { // parcours des colonnes de notre table
+
+            for (String columnName : columnNames) { // parcours des colonnes ındıques dans les param
+                // Vérifier si la colonne est présente dans les données de la table
+                if (!entry.getKey().equals(columnName)) {
+                    throw new IllegalArgumentException("La colonne " + columnName + " n'existe pas dans la tbl");
+                }
+
+                // Supprimer la colonne de la table
+                tableData.remove(columnName);
+            }
+
+        }
+
+    }
+
+    //mettre à jour une colonne donné
+    public void updateColumn(String tableName, String columnName, List<String> newData) {
+        // Vérifier si la table existe dans la base de données
+        if (!database.containsKey(tableName)) {
+            throw new IllegalArgumentException("La table " + tableName + " n'existe pas dans la base de données");
+        }
+
+        // Vérifier si la colonne existe dans la table
+        Map<String, List<String>> table = database.get(tableName);
+        if (!table.containsKey(columnName)) {
+            throw new IllegalArgumentException("La colonne " + columnName + " n'existe pas dans la table " + tableName);
+        }
+
+        // Mettre à jour les données de la colonne
+        table.put(columnName, newData);
+    }
+
+    //supprimer une cellule selon le nom
+    public void deleteRows(String tableName, String columnName, String value) {
+        // Vérifier si la table existe dans la base de données
+        if (!database.containsKey(tableName)) {
+            throw new IllegalArgumentException("La table " + tableName + " n'existe pas dans la base de données");
+        }
+
+        // Vérifier si la colonne existe dans la table
+        Map<String, List<String>> table = database.get(tableName);
+        if (!table.containsKey(columnName)) {
+            throw new IllegalArgumentException("La colonne " + columnName + " n'existe pas dans la table " + tableName);
+        }
+
+        // Supprimer les lignes où la valeur de la colonne correspond à la valeur spécifiée
+        List<String> columnData = table.get(columnName);
+        /*for(String cel : columnData){
+            if(cel.equals(value))columnData.remove(cel);
+        }*/
+        columnData.removeIf(cel -> cel.equals(value));//equivalent au code commenté ci-desssus
+    }
+
+    //fusionner 2 tables
+    public void mergeTables(String newTableName, String firstTableName, String secondTableName) {
+        // Vérifier si les tables existent dans la base de données
+        if (!database.containsKey(firstTableName) || !database.containsKey(secondTableName)) {
+            throw new IllegalArgumentException("Les tables spécifiées n'existent pas dans la base de données");
+        }
+
+        // Fusionner les données des deux tables
+        Map<String, List<String>> newTable = new HashMap<>();
+        Map<String, List<String>> firstTable = database.get(firstTableName);
+        Map<String, List<String>> secondTable = database.get(secondTableName);
+
+        // Fusionner les colonnes de la première table
+        for (Map.Entry<String, List<String>> entry : firstTable.entrySet()) {
+            newTable.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
+
+        // Fusionner les colonnes de la deuxième table
+        for (Map.Entry<String, List<String>> entry : secondTable.entrySet()) {
+            if (newTable.containsKey(entry.getKey())) {
+                // S'il y a une collision de noms de colonne, renommer la colonne de la deuxième table
+                newTable.put(secondTableName + "_" + entry.getKey(), new ArrayList<>(entry.getValue()));
+            } else {
+                newTable.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+            }
+        }
+
+        // Ajouter la nouvelle table fusionnée à la base de données
+        if (database.containsKey(newTableName)) {
+            throw new IllegalArgumentException("Une table avec le même nom existe déjà");
+        } else {
+            database.put(newTableName, newTable);
+        }
+    }
+
+    //trier selon les valeurs d'une colonne spécifique
+    public void sortTablebycolumn(String tableName, String columnName) {
+        // Vérifier si la table existe dans la base de données
+        if (!database.containsKey(tableName)) {
+            throw new IllegalArgumentException("La table " + tableName + " n'existe pas dans la base de données");
+        }
+
+        // Vérifier si la colonne existe dans la table
+        Map<String, List<String>> table = database.get(tableName);
+        if (!table.containsKey(columnName)) {
+            throw new IllegalArgumentException("La colonne " + columnName + " n'existe pas dans la table " + tableName);
+        }
+
+        // Récupérer les données de la colonne à trier
+        List<String> columnData = table.get(columnName);
+
+        // Trier les données de la colonne
+        columnData.sort(null);
+    }
+
+    //joindre 2 tables
+    public List<Map<String, List<String>>> joinTables(String firstTableName, String secondTableName, String commonColumn) {
+        List<Map<String, List<String>>> results = new ArrayList<>();
+
+        // Vérifier si les tables existent dans la base de données
+        if (!database.containsKey(firstTableName) || !database.containsKey(secondTableName)) {
+            throw new IllegalArgumentException("Les tables spécifiées n'existent pas dans la base de données");
+        }
+
+        // Récupérer les données des tables
+        Map<String, List<String>> firstTable = database.get(firstTableName);
+        Map<String, List<String>> secondTable = database.get(secondTableName);
+
+        // Vérifier si la colonne commune existe dans les deux tables
+        if (!firstTable.containsKey(commonColumn) || !secondTable.containsKey(commonColumn)) {
+            throw new IllegalArgumentException("La colonne commune spécifiée n'existe pas dans les deux tables");
+        }
+
+        // Joindre les tables en fonction de la colonne commune
+        for (Map.Entry<String, List<String>> firstEntry : firstTable.entrySet()) {
+            if (firstEntry.getKey().equals(commonColumn)) {
+                continue; // Éviter de traiter la colonne commune elle-même
+            }
+            for (Map.Entry<String, List<String>> secondEntry : secondTable.entrySet()) {
+                if (secondEntry.getKey().equals(commonColumn)) {
+                    continue; // Éviter de traiter la colonne commune elle-même
+                }
+                if (firstEntry.getValue().equals(secondEntry.getValue())) {
+                    // Fusionner les données des deux tables dans un résultat
+                    Map<String, List<String>> resultRow = new HashMap<>();
+                    resultRow.putAll(firstTable);
+                    resultRow.putAll(secondTable);
+                    results.add(resultRow);
+                }
+            }
+        }
+
+        return results;
+    }
+
+    //compter le nombre de lignes
+    public int countRows(String tableName) {
+        // Vérifier si la table existe dans la base de données
+        if (!database.containsKey(tableName)) {
+            throw new IllegalArgumentException("La table " + tableName + " n'existe pas dans la base de données");
+        }
+
+        // Compter le nombre de lignes dans la table
+        Map<String, List<String>> table = database.get(tableName);
+        int rowCount = 0;
+        for (Map.Entry<String, List<String>> entry : table.entrySet()) {
+            rowCount = Math.max(rowCount, entry.getValue().size());
+        }
+        return rowCount;
+    }
+
+
+
+
+
+       //----------travaux DIAKITE 11/03-------------//
+
+
+
+
+
+
     // TODO : URGENT (read a .parquet file and parse it to json)
     // public void test() throws IllegalArgumentException, IOException {
     // List<SimpleGroup> simpleGroups = new ArrayList<>();
