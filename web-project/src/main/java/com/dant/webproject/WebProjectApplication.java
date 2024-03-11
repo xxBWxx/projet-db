@@ -29,6 +29,10 @@ public class WebProjectApplication {
 			databaseService.createTable("test", columnNames);
 
 			databaseService.add("test", "baran", "i love coding!!!");
+
+			//Rajout de la condition pour les repartition des donnée
+
+
 		};
 	};
 }
