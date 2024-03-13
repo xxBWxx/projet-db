@@ -2,10 +2,7 @@ package com.dant.webproject.services;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 // import org.apache.avro.generic.GenericRecord;
@@ -51,13 +48,22 @@ import java.io.File;
 
 import com.google.gson.Gson;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+
 @Component
 public class DatabaseService {
 
     // Structure de données pour stocker les tables et les données
     // private Map<String, Map<String, Object>> database = new
     // ConcurrentHashMap<>();
+
+
     private Map<String, Map<String, List<String>>> database = new HashMap<>();
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     // Méthode pour effectuer une opération de sélection (SELECT)
     public List<Map<String, List<String>>> select(String table, List<String> columnNames) {
@@ -126,6 +132,43 @@ public class DatabaseService {
     public Map<String, Map<String, List<String>>> getDatabase() {
         return database;
     }
+
+    //------------------------Partie serveur youness => etablissement de la logique de communication entre serveurs
+
+    public List<String> getColumnContent(String tableName, String columnName) {
+        if (database.containsKey(tableName)) {
+            Map<String, List<String>> table = database.get(tableName);
+            return table.getOrDefault(columnName, Collections.emptyList());
+        }
+        return Collections.emptyList(); // Retourne une liste vide si la table ou la colonne n'existe pas
+    }
+
+
+    public List<String> getColumnContentOrFetchRemotely(String tableName, String columnName) {
+        List<String> localValue = getColumnContent(tableName, columnName);
+        if (!localValue.isEmpty()) {
+            return localValue;
+        } else {
+            System.out.println("Valeur non trouver dans le serveur 1");
+            String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"};
+            for (String serverUrl : serverUrls) {
+                try {
+                    String url = serverUrl + "/api/data?tableName=" + tableName + "&columnName=" + columnName;
+                    List<String> remoteValue = restTemplate.getForObject(url, List.class);
+                    if (remoteValue != null && !remoteValue.isEmpty()) {
+
+                        System.out.println("Communication avec "+serverUrl);
+                        return remoteValue;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace(); // Handle exception or log it
+                }
+            }
+        }
+        return Collections.emptyList(); // Return empty if not found anywhere
+    }
+
+    //----------------------------------------------------------------------------------
 
 
 

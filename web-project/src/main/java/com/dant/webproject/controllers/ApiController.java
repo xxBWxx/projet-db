@@ -38,4 +38,14 @@ public class ApiController {
         return databaseService.getDatabase();
     }
 
+    @GetMapping("/data")
+    public List<String> getColumn(@RequestParam String tableName, @RequestParam String columnName) {
+        return databaseService.getColumnContent(tableName, columnName);
+    }
+
+    @GetMapping("/data1")
+    public List<String> getColumn1(@RequestParam String tableName, @RequestParam String columnName) {
+        return databaseService.getColumnContentOrFetchRemotely(tableName, columnName);
+    }
+
 }
