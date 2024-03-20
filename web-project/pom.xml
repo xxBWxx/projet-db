@@ -20,14 +20,20 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.parquet</groupId>
-			<artifactId>parquet-avro</artifactId>
-			<version>1.10.0</version>
+			<artifactId>parquet-hadoop</artifactId>
+			<version>1.9.0</version>
 		</dependency>
-		<!-- <dependency>
+		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-common</artifactId>
-			<version>3.1.0</version>
-		</dependency> -->
+			<version>2.7.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-reload4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
