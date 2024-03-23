@@ -51,7 +51,15 @@ public class DatabaseService {
   // private Map<String, Map<String, Object>> database = new
   // ConcurrentHashMap<>();
 
-  private Map<String, Map<String, List<String>>> database = new HashMap<>();
+  private static Map<String, Map<String, List<String>>> database = null;
+
+  public static Map<String, Map<String, List<String>>> getDatabase() {
+    if (database == null) {
+      database = new HashMap<>();
+    }
+
+    return database;
+  }
 
   @Autowired
   private RestTemplate restTemplate;
@@ -129,10 +137,6 @@ public class DatabaseService {
     }
 
     database.put(tableName, table);
-  }
-
-  public Map<String, Map<String, List<String>>> getDatabase() {
-    return database;
   }
 
   //------------------------Partie serveur youness => etablissement de la logique de communication entre serveurs
