@@ -445,6 +445,49 @@ public class DatabaseService {
   }
   //----------travaux DIAKITE 11/03-------------//
 
+
+
+  //----------travaux DIAKITE 24/03------------//
+  public List<Map<String, List<String>>> select_colums(String table, String...cols){
+    List<Map<String, List<String>>> results = new ArrayList<>();
+
+    // Vérifier si la table existe dans la base de données
+    if (!database.containsKey(table)) {
+      throw new IllegalArgumentException("Table non trouvee dans db");
+    }
+
+    // Récupérer les données de la table
+    Map<String, List<String>> tableData = database.get(table);
+
+    //recupérer les colonnes de la table
+    Set<String> colonnes=tableData.keySet();
+
+    for(String colonne : cols){
+      for(String s: colonnes){
+        if(colonne.equals(s)){
+          Map<String, List<String>> newmap=new HashMap<>();
+          newmap.put(s,tableData.get(s));
+          results.add(newmap);
+        }
+      }
+    }
+
+    return results;
+  }
+
+  public void insert_into(String table,String col_name, String...value){
+    for(String s: value){
+      add(table,col_name,s);
+    }
+
+  }
+  //----------travaux DIAKITE 24/03------------//
+
+
+
+
+
+
   // TODO : URGENT (read a .parquet file and parse it to json)
   // public void test() throws IllegalArgumentException, IOException {
   // List<SimpleGroup> simpleGroups = new ArrayList<>();
