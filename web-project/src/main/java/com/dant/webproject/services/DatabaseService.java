@@ -445,7 +445,141 @@ public class DatabaseService {
   }
   //----------travaux DIAKITE 11/03-------------//
 
-  // TODO : URGENT (read a .parquet file and parse it to json)
+
+
+  //----------travaux DIAKITE 24/03------------//
+  public List<Map<String, List<String>>> select_colums(String table, String...cols){
+    List<Map<String, List<String>>> results = new ArrayList<>();
+
+    // Vérifier si la table existe dans la base de données
+    if (!database.containsKey(table)) {
+      throw new IllegalArgumentException("Table non trouvee dans db");
+    }
+
+    // Récupérer les données de la table
+    Map<String, List<String>> tableData = database.get(table);
+
+    //recupérer les colonnes de la table
+    Set<String> colonnes=tableData.keySet();
+
+    for(String colonne : cols){
+      for(String s: colonnes){
+        if(colonne.equals(s)){
+          Map<String, List<String>> newmap=new HashMap<>();
+          newmap.put(s,tableData.get(s));
+          results.add(newmap);
+        }
+      }
+    }
+
+    return results;
+  }
+
+  public void insert_into(String table,String col_name, String...value){
+    for(String s: value){
+      add(table,col_name,s);
+    }
+
+  }
+     // ----------travaux DIAKITE 24/03------------//
+
+
+    // ----------travaux DIAKITE 27/03------------//
+
+    public List<Map<String, List<String>>> selectWhere(String table, String columnName, String value) {
+
+        // Récupérer les données de la table
+        Map<String, List<String>> tableData = database.get(table);
+        // Vérifier si la table existe dans la base de données
+        if (tableData == null) {
+            throw new IllegalArgumentException("Table non trouvée dans la base de données");
+        }
+
+        // Vérifier si la colonne existe dans les données de la table
+        if (!tableData.containsKey(columnName)) {
+            throw new IllegalArgumentException("La colonne " + columnName + " n'existe pas dans la table");
+        }
+
+        List<Map<String, List<String>>> results = new ArrayList<>();
+
+        // Filtrer les données en fonction de la condition
+        List<String> columnData = tableData.get(columnName);
+        Map<String, List<String>> filteredResult = new LinkedHashMap<>(); // Utilisation de LinkedHashMap pour préserver l'ordre des colonnes
+        List<Integer> indices = new ArrayList<>();
+
+        for (int i = 0; i < columnData.size(); i++) {
+            String cellValue = columnData.get(i);
+            if (cellValue != null && cellValue.equals(value)) {
+                indices.add(i);
+            }
+        }
+
+        // Ajout des colonnes filtrées dans le résultat
+        for (Map.Entry<String, List<String>> entry : tableData.entrySet()) {
+            String currentColumn = entry.getKey();
+            List<String> columnValues = entry.getValue();
+            List<String> filteredColumnData = new ArrayList<>();
+
+            for (Integer ind : indices) {
+                filteredColumnData.add(columnValues.get(ind));
+            }
+
+            filteredResult.put(currentColumn, filteredColumnData);
+        }
+
+        results.add(filteredResult);
+
+        return results;
+    }
+
+    public int sum(String table, String columnName) {
+        // Récupérer les données de la table
+        Map<String, List<String>> tableData = database.get(table);
+
+        // Vérifier si la table existe dans la base de données
+        if (tableData == null) {
+            throw new IllegalArgumentException("Table non trouvée dans la base de données");
+        }
+
+        // Vérifier si la colonne existe dans les données de la table
+        if (!tableData.containsKey(columnName)) {
+            throw new IllegalArgumentException("La colonne " + columnName + " n'existe pas dans la table");
+        }
+
+        // Récupérer les valeurs de la colonne spécifiée
+        List<String> columnValues = tableData.get(columnName);
+
+        // Initialiser la somme
+        int somme = 0;
+
+        // Parcourir les valeurs de la colonne et les additionner
+        for (String value : columnValues) {
+            try {
+                // Parser la valeur en entier et l'ajouter à la somme
+                int numericValue = Integer.parseInt(value);
+                somme += numericValue;
+            } catch (NumberFormatException e) {
+                // En cas d'erreur de format, ignorer la valeur et passer à la suivante
+                // Vous pouvez choisir de loguer cette erreur si nécessaire
+                System.err.println("- non considéré");
+            }
+        }
+
+        return somme;
+    }
+
+
+
+
+
+
+
+    // ----------travaux DIAKITE 27/03------------//
+
+
+
+
+    // TODO : URGENT (read a .parquet file and parse it to json)
   // public void test() throws IllegalArgumentException, IOException {
   // List<SimpleGroup> simpleGroups = new ArrayList<>();
   // ParquetFileReader reader = ParquetFileReader
