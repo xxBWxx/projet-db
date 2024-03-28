@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.Instant;
+import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.avro.generic.GenericRecord;
 // import org.apache.hadoop.conf.Configuration;
@@ -44,6 +46,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+
+
 @Component
 public class DatabaseService {
 
@@ -51,7 +62,10 @@ public class DatabaseService {
   // private Map<String, Map<String, Object>> database = new
   // ConcurrentHashMap<>();
 
-  private static Map<String, Map<String, List<String>>> database = null;
+  @Autowired
+  private RestTemplate restTemplate;
+  private static Map<String, Map<String, List<String>>> database = new HashMap<String, Map<String, List<String>>>();
+
 
   public static Map<String, Map<String, List<String>>> getDatabase() {
     if (database == null) {
@@ -60,9 +74,6 @@ public class DatabaseService {
 
     return database;
   }
-
-  @Autowired
-  private RestTemplate restTemplate;
 
   // Méthode pour effectuer une opération de sélection (SELECT)
   public List<Map<String, List<String>>> select(
@@ -153,35 +164,90 @@ public class DatabaseService {
     String tableName,
     String columnName
   ) {
+
+    String[] serverUrls = {
+      "http://localhost:8081",
+      "http://localhost:8082",
+    };
+    Instant start = Instant.now(); // Démarre le chronomètre
+
     List<String> localValue = getColumnContent(tableName, columnName);
-    if (!localValue.isEmpty()) {
-      return localValue;
-    } else {
-      System.out.println("Valeur non trouver dans le serveur 1");
-      String[] serverUrls = {
-        "http://localhost:8081",
-        "http://localhost:8082",
-      };
-      for (String serverUrl : serverUrls) {
-        try {
-          String url =
-            serverUrl +
-            "/api/data?tableName=" +
-            tableName +
-            "&columnName=" +
-            columnName;
-          List<String> remoteValue = restTemplate.getForObject(url, List.class);
-          if (remoteValue != null && !remoteValue.isEmpty()) {
-            System.out.println("Communication avec " + serverUrl);
-            return remoteValue;
-          }
-        } catch (Exception e) {
-          e.printStackTrace(); // Handle exception or log it
+    for (String serverUrl : serverUrls) {
+      try {
+        String url =
+          serverUrl +
+          "/api/data?tableName=" +
+          tableName +
+          "&columnName=" +
+          columnName;
+        List<String> remoteValue = restTemplate.getForObject(url, List.class);
+        if (remoteValue != null && !remoteValue.isEmpty()) {
+          System.out.println("Communication avec " + serverUrl);
+          localValue.addAll(remoteValue);
         }
+      } catch (Exception e) {
+        e.printStackTrace(); // Handle exception or log it
       }
     }
-    return Collections.emptyList(); // Return empty if not found anywhere
+
+    Instant finish = Instant.now(); // Arrête le chronomètre
+    long timeElapsed = Duration.between(start, finish).toMillis(); // Calcul de la durée totale en millisecondes
+
+    System.out.println("Temps total pour récupérer les informations : " + timeElapsed + " ms");
+
+
+    return localValue; // Return empty if not found anywhere
   }
+
+
+  public List<String> getColumnContentOrFetchRemotely2(String tableName, String columnName) {
+    final String[] serverUrls = {
+            "http://localhost:8081",
+            "http://localhost:8082"
+    };
+
+    ExecutorService executor = Executors.newFixedThreadPool(3); // Pour 3 tâches en parallèle
+    List<Future<List<String>>> futures = new ArrayList<>();
+
+    // Tâche pour la recherche locale
+    futures.add(executor.submit(() -> getColumnContent(tableName, columnName)));
+
+    // Tâches pour les requêtes aux serveurs distants
+    for (String serverUrl : serverUrls) {
+      futures.add(executor.submit(() -> {
+        try {
+          String url = serverUrl + "/api/data?tableName=" + tableName + "&columnName=" + columnName;
+          return restTemplate.getForObject(url, List.class);
+        } catch (Exception e) {
+          e.printStackTrace();
+          return new ArrayList<String>(); // Retourne une liste vide en cas d'erreur
+        }
+      }));
+    }
+    Instant start = Instant.now(); // Démarre le chronomètre
+
+    List<String> combinedResults = new ArrayList<>();
+    // Collecte et combine les résultats
+    for (Future<List<String>> future : futures) {
+      try {
+        List<String> result = future.get(); // Attend que la tâche soit terminée et obtient le résultat
+        combinedResults.addAll(result); // Ajoute tous les résultats à la liste combinée
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
+    }
+
+    Instant finish = Instant.now(); // Arrête le chronomètre
+    long timeElapsed = Duration.between(start, finish).toMillis(); // Calcul de la durée totale en millisecondes
+
+    System.out.println("Temps total pour récupérer les informations : " + timeElapsed + " ms");
+
+    executor.shutdown(); // Ferme l'ExecutorService
+
+    return combinedResults; // Retourne la liste combinée de tous les résultats
+  }
+
+
 
   //----------------------------------------------------------------------------------
 
