@@ -1,8 +1,14 @@
 package com.dant.webproject.services;
 
-public class DatabaseManagementService
-  extends Service
-  implements IDatabaseManagementService {
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+
+public class DatabaseManagementService implements IDatabaseManagementService {
+
+  @Autowired
+  private static Map<String, Map<String, List<String>>> database = new HashMap<>();
 
   @Override
   public void createTable(String tableName) {

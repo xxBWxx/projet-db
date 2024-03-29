@@ -1,10 +1,18 @@
 package com.dant.webproject.services;
 
-public class LoadService extends Service implements ILoadService {
+import com.dant.webproject.utils.ParquetReader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+
+public class LoadService implements ILoadService {
+
+  @Autowired
+  private static Map<String, Map<String, List<String>>> database;
 
   @Override
-  public void loadDatabase() {
-    // TODO Auto-generated method stub
-
+  public void loadDatabase(String filePath) {
+    ParquetReader.parseParquetFile(filePath);
   }
 }
