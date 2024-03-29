@@ -25,19 +25,19 @@ import org.apache.parquet.schema.Type;
 
 public class ParquetReader {
 
-  private static Map<String, String> getFieldValueMap(Group g) {
+  private static Map<String, String> getFieldValueMap(SimpleGroup group) {
     Map<String, String> res = new HashMap<>();
 
-    int fieldCount = g.getType().getFieldCount();
+    int fieldCount = group.getType().getFieldCount();
 
     for (int fieldIndex = 0; fieldIndex < fieldCount; fieldIndex++) {
-      int valueCount = g.getFieldRepetitionCount(fieldIndex);
+      int valueCount = group.getFieldRepetitionCount(fieldIndex);
 
-      Type fieldType = g.getType().getType(fieldIndex);
+      Type fieldType = group.getType().getType(fieldIndex);
       String fieldName = fieldType.getName();
 
       for (int i = 0; i < valueCount; i++) {
-        res.put(fieldName, g.getValueToString(fieldIndex, i));
+        res.put(fieldName, group.getValueToString(fieldIndex, i));
       }
     }
 
@@ -165,7 +165,9 @@ public class ParquetReader {
             fieldMap.get(fieldName).add(valueToAdd);
           }
         }
-        // System.out.println(DatabaseService.getDatabase());
+
+        System.out.println(DatabaseService.getDatabase());
+        System.out.println(TableParser.parseColumnsToFloat(fieldMap));
       }
       reader.close();
     } catch (IOException e) {
