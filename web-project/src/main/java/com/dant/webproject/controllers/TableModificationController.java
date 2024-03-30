@@ -4,7 +4,7 @@ import com.dant.webproject.services.TableModificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/tablemodification")
@@ -14,10 +14,19 @@ public class TableModificationController {
     private TableModificationService tableModificationService;
 
 
+    @PostMapping("/insertMult")
+    public void insertMult(@RequestParam String table, @RequestBody Map<String, Object> requestData) {
+
+        List<String> col_name = (List<String>)(requestData.get("col_name"));
+        List<List<String>> value = (List<List<String>>)(requestData.get("value"));
+        tableModificationService.insertMult(table, col_name, value);
+    }
+
     @PostMapping("/insert")
-    public void insert(@RequestParam String table, @RequestBody Map<String, String[]> requestData) {
-        String[] col_name = requestData.get("col_name");
-        String[] value = requestData.get("value");
+    public void insert(@RequestParam String table, @RequestBody Map<String, List<String>> requestData) {
+
+        List<String> col_name = requestData.get("col_name");
+        List<String> value = requestData.get("value");
         tableModificationService.insert(table, col_name, value);
     }
 

@@ -82,16 +82,37 @@ public class DistributedService {
     }
 
 
-    public void insertDistributed(String table, String[] col_name, String[] value){
+    public void insertDistributed(String table, List<String> col_name, List<List<String>> value){
+        int cpt=0;
         String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"};
 
-        if(col_name.length==1){
-            tableModificationService.insert(table, col_name, value);
+        if(value.size()==1){
+            tableModificationService.insert(table, col_name, value.get(1));
             return;
         }
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
+        for (List<String> item : value) {
+            if(cpt==0){
+                tableModificationService.insert(table, col_name, item);
+                cpt++;
+                continue;
+            }
+            // Construire le corps de la requête
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("col_name", col_name);
+            requestBody.put("value", item);
 
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+            // Construire l'URL pour le point de terminaison d'insertion
+            String insertUrl = serverUrls[cpt-1] + "/tablemodification/insert?table=" + table;
+            cpt=(cpt+1)%3;
+            // Effectuer la requête HTTP POST
+            restTemplate.exchange(insertUrl, HttpMethod.POST, requestEntity, Void.class);
+        }
     }
 
 

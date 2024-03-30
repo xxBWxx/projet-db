@@ -39,9 +39,17 @@ public class TableModificationService implements ISelectService{
     }
 
 
-    public void insert(String table, String[] col_name, String[] value) {
-        for (int i = 0; i < col_name.length; i++) {
-            add(table, col_name[i], value[i]);
+    public void insertMult(String table, List<String> col_name, List<List<String>> value) {
+        for (int i = 0; i < value.size(); i++) {
+            for (int j = 0; j < col_name.size(); j++) {
+                add(table, col_name.get(j), value.get(i).get(j));
+            }
+        }
+    }
+
+    public void insert(String table, List<String> col_name, List<String> value){
+        for (int i = 0; i < value.size(); i++) {
+            add(table, col_name.get(i), value.get(i));
         }
     }
 
