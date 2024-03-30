@@ -34,7 +34,14 @@ public class DistributedService {
 
 
     public Map<String, List<String>> selectAllDistributed(String tableName) {
-        Map<String, List<String>> value = new HashMap<>(selectService.selectAll(tableName));
+
+        Map<String, List<String>> value = new HashMap<>();
+        selectService.selectAll(tableName).forEach((key, val) -> {
+            if (!value.containsKey(key)) {
+                value.put(key, new ArrayList<>());
+            }
+            value.get(key).addAll(val);
+        });
 
 
         String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
