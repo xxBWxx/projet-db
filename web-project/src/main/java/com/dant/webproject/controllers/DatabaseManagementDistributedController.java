@@ -11,22 +11,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dant.webproject.services.DatabaseService;
 
 @RestController
-@RequestMapping("/databasemanagement")
+@RequestMapping("/databasemanagementdistributed")
 public class DatabaseManagementDistributedController {
 
     @Autowired
     private DistributedService distributedService;
 
 
-//    @PostMapping("/create")
-//    public void createTable(@RequestParam String tableName, @RequestParam List<String> columns) {
-//        distributedService.createTableDistributed(tableName, columns);
-//    }
+    @PostMapping("/create")
+    public void createTable(@RequestParam String tableName, @RequestBody List<String> columns) {
+        distributedService.createTableDistributed(tableName, columns);
+    }
 
 }

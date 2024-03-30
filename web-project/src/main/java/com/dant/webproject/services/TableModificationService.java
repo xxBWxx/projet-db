@@ -17,7 +17,8 @@ public class TableModificationService implements ISelectService{
         this.databaseManagementService=databaseManagementService;
     }
 
-    private void add(String tableName, String columnName, String data) {
+    //Fonction intermediaire pour insert
+     private void add(String tableName, String columnName, String data) {
         if (databaseManagementService.getDatabase().get(tableName) == null) {
             throw new IllegalArgumentException(
                     "La table " + tableName + " n'existe pas dans la base de donnees"
@@ -36,6 +37,7 @@ public class TableModificationService implements ISelectService{
 
         column.add(data);
     }
+
 
     public void insert(String table, String[] col_name, String[] value) {
         for (int i = 0; i < col_name.length; i++) {

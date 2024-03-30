@@ -15,6 +15,9 @@ public class LoadService implements ILoadService {
   private final SelectService selectService;
 
 
+  /*
+  LoadDataToDatabase(String, InputStream) qui va utiliser parseParquetFile; parseParquetFile(String, InputStream)
+   */
   @Autowired
   public LoadService(SelectService selectService){
     this.selectService=selectService;
