@@ -5,14 +5,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
+@Component
 public class LoadService implements ILoadService {
 
   @Autowired
-  private static Map<String, Map<String, List<String>>> database;
+  private final SelectService selectService;
 
-  @Override
-  public void loadDatabase(String filePath) {
-    ParquetReader.parseParquetFile(filePath);
+
+  @Autowired
+  public LoadService(SelectService selectService){
+    this.selectService=selectService;
   }
+
+
 }

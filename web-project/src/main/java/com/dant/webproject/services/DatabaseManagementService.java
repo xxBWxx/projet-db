@@ -1,26 +1,37 @@
 package com.dant.webproject.services;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class DatabaseManagementService implements IDatabaseManagementService {
 
-  @Autowired
-  private static Map<String, Map<String, List<String>>> database = new HashMap<>();
 
-  @Override
-  public void createTable(String tableName) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException(
-      "Unimplemented method 'createTable'"
-    );
+  private Map<String, Map<String, List<String>>> database = new HashMap<>();
+
+  public void createTable(String tableName, List<String> columns) {
+    if (database.get(tableName) != null) {
+      throw new IllegalArgumentException(
+              "La table " + tableName + " existe deja dans la base de donnees"
+      );
+    }
+
+    Map<String, List<String>> table = new HashMap<>();
+
+    for (String column : columns) {
+      table.put(column, new ArrayList<>());
+    }
+
+    database.put(tableName, table);
   }
 
-  @Override
-  public void getTable(String tableName) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getTable'");
+  public Map<String, Map<String, List<String>>> getDatabase(){
+    return database;
   }
+
+
 }

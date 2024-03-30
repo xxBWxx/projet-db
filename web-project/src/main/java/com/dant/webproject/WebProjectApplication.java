@@ -23,7 +23,6 @@ public class WebProjectApplication {
     Environment env
   ) {
     return args -> {
-      /*------------------Partie serveur gerer par Youness---------------*/
 
       // Récupération du port actuel à partir de l'environnement
       String serverPort = env.getProperty("local.server.port");
@@ -42,23 +41,12 @@ public class WebProjectApplication {
 				en utilisant des RestTemplate pour faire des appels HTTP aux endpoints des serveurs 2 et 3
 
 			 */
-      if ("8080".equals(serverPort)) {
-        System.out.println("BON, on est bien sur le port " + serverPort);
-        System.out.println(name);
 
-        // TODO: change file path
-        ParquetReader.parseParquetFile(
-          "C:\\Users\\SA\\Desktop\\SU\\L3\\S2\\Web\\projet-db\\web-project\\src\\main\\java\\com\\dant\\webproject\\yellow_tripdata_2012-01.parquet"
-        );
-      }
-      if ("8081".equals(serverPort)) {
-        System.out.println("BON, on est bien sur le port " + serverPort);
-        System.out.println(name);
-      }
-      if ("8082".equals(serverPort)) {
-        System.out.println("BON, on est bien sur le port " + serverPort);
-        System.out.println(name);
-      }
+      System.out.println("---------------------------------------------");
+      System.out.println("Port: " + serverPort);
+      System.out.println("Server name: " +name);
+      System.out.println("---------------------------------------------");
+
     };
   }
 }
