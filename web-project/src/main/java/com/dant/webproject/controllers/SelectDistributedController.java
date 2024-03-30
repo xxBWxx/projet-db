@@ -22,7 +22,7 @@ public class SelectDistributedController {
 
 
     @GetMapping("/selectallfrom")
-    public List<Map<String, List<String>>> selectAll(@RequestParam String tableName) {
+    public Map<String, List<String>> selectAll(@RequestParam String tableName) {
         return distributedService.selectAllDistributed(tableName);
     }
 

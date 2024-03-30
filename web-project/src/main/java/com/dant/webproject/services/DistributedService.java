@@ -24,10 +24,9 @@ public class DistributedService {
     }
 
 
-    public List<Map<String, List<String>>> selectAllDistributed(String tableName) {
-        List<Map<String, List<String>>> value = new ArrayList<>();
+    public Map<String, List<String>> selectAllDistributed(String tableName) {
+        Map<String, List<String>> value = new HashMap<>(selectService.selectAll(tableName));
 
-        value.add(selectService.selectAll(tableName));
 
         String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
 
@@ -37,7 +36,7 @@ public class DistributedService {
 
                 // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
                 Map<String, List<String>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<String>>>() {}).getBody();
-                value.add(result);
+                result.forEach((key, val) -> value.get(key).addAll(val));
 
             } catch (Exception e) {
                 e.printStackTrace(); // Handle exception or log it
