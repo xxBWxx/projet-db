@@ -62,9 +62,9 @@ public class DistributedService {
         return value; // Return empty if not found anywhere
     }
 
-    public void createTableDistributed(String tableName, List<String> columns){
+    public void createTableColDistributed(String tableName, List<String> columns){
 
-        databaseManagementService.createTable(tableName, columns);
+        databaseManagementService.createTableCol(tableName, columns);
         String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"};
 
         // Headers pour la requête HTTP
@@ -76,8 +76,20 @@ public class DistributedService {
 
         // Appel du point de terminaison sur chaque serveur
         for (String serverUrl : serverUrls) {
-            String createTableUrl = serverUrl + "/databasemanagement/create?tableName=" + tableName;
+            String createTableUrl = serverUrl + "/databasemanagement/createTableCol?tableName=" + tableName;
             restTemplate.exchange(createTableUrl, HttpMethod.POST, requestEntity, Void.class);
+        }
+    }
+
+    public void createTableDistributed(String tableName){
+        databaseManagementService.createTable(tableName);
+        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"};
+
+
+        // Appel du point de terminaison sur chaque serveur
+        for (String serverUrl : serverUrls) {
+            String createTableUrl = serverUrl + "/databasemanagement/createTable?tableName=" + tableName;
+            restTemplate.exchange(createTableUrl, HttpMethod.POST, null, Void.class);
         }
     }
 
@@ -115,7 +127,7 @@ public class DistributedService {
         }
     }
 
-    //Select Where
+    //Select col from table Where condition
 
 
 }

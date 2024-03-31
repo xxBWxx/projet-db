@@ -29,10 +29,17 @@ public class DatabaseManagementDistributedController {
 
     private static final Logger LOGGER  = LoggerFactory.getLogger(DatabaseManagementDistributedController.class);
 
-    @PostMapping("/create")
-    public ResponseEntity<String> createTable(@RequestParam String tableName, @RequestBody List<String> columns) {
+    @PostMapping("/createTableCol")
+    public ResponseEntity<String> createTableCol(@RequestParam String tableName, @RequestBody List<String> columns) {
         LOGGER.info("Receiving request for the creation of table "+tableName);
-        distributedService.createTableDistributed(tableName, columns);
+        distributedService.createTableColDistributed(tableName, columns);
+        return ResponseEntity.ok("The table "+tableName+" was created successfully");
+    }
+
+    @PostMapping("/createTable")
+    public ResponseEntity<String> createTable(@RequestParam String tableName) {
+        LOGGER.info("Receiving request for the creation of table "+tableName);
+        distributedService.createTableDistributed(tableName);
         return ResponseEntity.ok("The table "+tableName+" was created successfully");
     }
 

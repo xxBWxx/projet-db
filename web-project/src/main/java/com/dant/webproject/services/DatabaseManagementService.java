@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,7 +13,7 @@ public class DatabaseManagementService implements IDatabaseManagementService {
 
   private Map<String, Map<String, List<String>>> database = new HashMap<>();
 
-  public void createTable(String tableName, List<String> columns) {
+  public void createTableCol(String tableName, List<String> columns) {
     if (database.get(tableName) != null) {
       throw new IllegalArgumentException(
               "La table " + tableName + " existe deja dans la base de donnees"
@@ -27,6 +27,16 @@ public class DatabaseManagementService implements IDatabaseManagementService {
     }
 
     database.put(tableName, table);
+  }
+
+  public void createTable(String tableName) {
+    if (database.get(tableName) != null) {
+      throw new IllegalArgumentException(
+              "La table " + tableName + " existe deja dans la base de donnees"
+      );
+    }
+
+    database.put(tableName, null);
   }
 
   public Map<String, Map<String, List<String>>> getDatabase(){
