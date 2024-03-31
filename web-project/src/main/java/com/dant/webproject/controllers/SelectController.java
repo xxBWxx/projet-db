@@ -1,8 +1,10 @@
 package com.dant.webproject.controllers;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.dant.webproject.dbcomponents.Column;
 import com.dant.webproject.services.DatabaseManagementService;
 import com.dant.webproject.services.SelectService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +26,7 @@ public class SelectController {
 
 
     @GetMapping("/selectallfrom")
-    public Map<String, List<String>> selectAll(@RequestParam String tableName) {
+    public Map<String, List<Object>> selectAll(@RequestParam String tableName) {
         return selectService.selectAll(tableName);
     }
 

@@ -1,6 +1,7 @@
 package com.dant.webproject.services;
 
 
+import com.dant.webproject.dbcomponents.Column;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +20,12 @@ public class SelectService implements ISelectService{
         this.databaseManagementService=databaseManagementService;
     }
 
-    public Map<String, List<String>> selectAll(String tableName) {
-        return databaseManagementService.getDatabase().get(tableName);
+    public Map<String, List<Object>> selectAll(String tableName) {
+        Map<String, List<Object>> res = new HashMap<>();
+        for (Map.Entry<String, Column> entry : databaseManagementService.getDatabase().get(tableName).entrySet()) {
+            res.put(entry.getKey(), entry.getValue().getValues());
+        }
+        return res;
     }
 
 }

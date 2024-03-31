@@ -1,5 +1,6 @@
 package com.dant.webproject.services;
 
+import com.dant.webproject.dbcomponents.Type;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class DistributedService {
@@ -33,9 +35,9 @@ public class DistributedService {
     }
 
 
-    public Map<String, List<String>> selectAllDistributed(String tableName) {
+    public Map<String, List<Object>> selectAllDistributed(String tableName) {
 
-        Map<String, List<String>> value = new HashMap<>();
+        Map<String, List<Object>> value = new HashMap<>();
         selectService.selectAll(tableName).forEach((key, val) -> {
             if (!value.containsKey(key)) {
                 value.put(key, new ArrayList<>());
@@ -62,9 +64,13 @@ public class DistributedService {
         return value; // Return empty if not found anywhere
     }
 
-    public void createTableColDistributed(String tableName, List<String> columns){
+    public void createTableColDistributed(String tableName, List<String> columns, List<String> type){
 
-        databaseManagementService.createTableCol(tableName, columns);
+        List<Type> typeList = type.stream().map(Type::valueOf).collect(Collectors.toList());
+        for (Type t : typeList) {
+            System.out.println(t);
+        }
+        databaseManagementService.createTableCol(tableName, columns, typeList);
         String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"};
 
         // Headers pour la requête HTTP
@@ -72,7 +78,11 @@ public class DistributedService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         // Corps de la requête (les colonnes)
-        HttpEntity<List<String>> requestEntity = new HttpEntity<>(columns, headers);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("col_name", columns);
+        requestBody.put("type", type);
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
         // Appel du point de terminaison sur chaque serveur
         for (String serverUrl : serverUrls) {

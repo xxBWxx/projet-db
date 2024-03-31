@@ -2,7 +2,9 @@ package com.dant.webproject.controllers;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.dant.webproject.dbcomponents.Type;
 import com.dant.webproject.services.DatabaseManagementService;
 import com.dant.webproject.services.DistributedService;
 import com.dant.webproject.services.SelectService;
@@ -30,9 +32,11 @@ public class DatabaseManagementDistributedController {
     private static final Logger LOGGER  = LoggerFactory.getLogger(DatabaseManagementDistributedController.class);
 
     @PostMapping("/createTableCol")
-    public ResponseEntity<String> createTableCol(@RequestParam String tableName, @RequestBody List<String> columns) {
+    public ResponseEntity<String> createTableCol(@RequestParam String tableName, @RequestBody Map<String, Object> requestData) {
         LOGGER.info("Receiving request for the creation of table "+tableName);
-        distributedService.createTableColDistributed(tableName, columns);
+        List<String> col_name = (List<String>)(requestData.get("col_name"));
+        List<String> type_name = (List<String>)(requestData.get("type"));
+        distributedService.createTableColDistributed(tableName, col_name, type_name);
         return ResponseEntity.ok("The table "+tableName+" was created successfully");
     }
 

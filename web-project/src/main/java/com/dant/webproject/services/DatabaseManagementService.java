@@ -5,26 +5,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.dant.webproject.dbcomponents.Column;
+import com.dant.webproject.dbcomponents.Type;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DatabaseManagementService implements IDatabaseManagementService {
 
 
-  private Map<String, Map<String, List<String>>> database = new HashMap<>();
+  private Map<String, Map<String, Column>> database = new HashMap<>();
 
-  public void createTableCol(String tableName, List<String> columns) {
+  public void createTableCol(String tableName, List<String> columns, List<Type> type) {
     if (database.get(tableName) != null) {
       throw new IllegalArgumentException(
               "La table " + tableName + " existe deja dans la base de donnees"
       );
     }
 
-    Map<String, List<String>> table = new HashMap<>();
+    Map<String, Column> table = new HashMap<>();
 
-    for (String column : columns) {
-      table.put(column, new ArrayList<>());
-    }
+    for(int i=0; i<columns.size();i++)
+      table.put(columns.get(i), new Column(columns.get(i), type.get(i)));
+
 
     database.put(tableName, table);
   }
@@ -39,7 +41,7 @@ public class DatabaseManagementService implements IDatabaseManagementService {
     database.put(tableName, null);
   }
 
-  public Map<String, Map<String, List<String>>> getDatabase(){
+  public Map<String, Map<String, Column>> getDatabase(){
     return database;
   }
 

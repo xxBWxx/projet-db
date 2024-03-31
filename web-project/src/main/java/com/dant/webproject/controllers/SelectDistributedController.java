@@ -24,7 +24,7 @@ public class SelectDistributedController {
 
     private static final Logger LOGGER  = LoggerFactory.getLogger(SelectDistributedController.class);
     @GetMapping("/selectallfrom")
-    public Map<String, List<String>> selectAll(@RequestParam String tableName) {
+    public Map<String, List<Object>> selectAll(@RequestParam String tableName) {
         LOGGER.info("Receiving select * from "+tableName+" request");
         return distributedService.selectAllDistributed(tableName);
     }

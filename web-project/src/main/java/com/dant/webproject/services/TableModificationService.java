@@ -1,5 +1,6 @@
 package com.dant.webproject.services;
 
+import com.dant.webproject.dbcomponents.Column;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +26,7 @@ public class TableModificationService implements ISelectService{
             );
         }
 
-        Map<String, List<String>> table = databaseManagementService.getDatabase().get(tableName);
+        Map<String, Column> table = databaseManagementService.getDatabase().get(tableName);
 
         if (table.get(columnName) == null) {
             throw new IllegalArgumentException(
@@ -33,9 +34,9 @@ public class TableModificationService implements ISelectService{
             );
         }
 
-        List<String> column = table.get(columnName);
+        Column column = table.get(columnName);
 
-        column.add(data);
+        column.addValue(data);
     }
 
 
