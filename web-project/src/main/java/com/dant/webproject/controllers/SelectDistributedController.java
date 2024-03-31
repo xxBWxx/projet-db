@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.dant.webproject.services.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +22,10 @@ public class SelectDistributedController {
     @Autowired
     private DistributedService distributedService;
 
-
+    private static final Logger LOGGER  = LoggerFactory.getLogger(SelectDistributedController.class);
     @GetMapping("/selectallfrom")
     public Map<String, List<String>> selectAll(@RequestParam String tableName) {
+        LOGGER.info("Receiving select * from "+tableName+" request");
         return distributedService.selectAllDistributed(tableName);
     }
 
