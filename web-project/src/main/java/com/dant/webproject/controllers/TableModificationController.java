@@ -1,5 +1,6 @@
 package com.dant.webproject.controllers;
 
+import com.dant.webproject.dbcomponents.Column;
 import com.dant.webproject.services.TableModificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +29,13 @@ public class TableModificationController {
         List<String> col_name = requestData.get("col_name");
         List<String> value = requestData.get("value");
         tableModificationService.insert(table, col_name, value);
+    }
+
+    @PostMapping("/update_col")
+    public void update_col(@RequestParam String tableName, @RequestParam String columnName, @RequestBody List<String> requestData) {
+
+        tableModificationService.updateColumn(tableName,columnName,requestData);
+
     }
 
 }
