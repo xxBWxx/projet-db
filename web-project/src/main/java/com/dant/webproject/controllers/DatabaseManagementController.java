@@ -24,4 +24,14 @@ public class DatabaseManagementController {
         databaseManagementService.createTable(tableName);
     }
 
+    @GetMapping("/showTables")
+    public String showTables() {
+        List<String> tables = databaseManagementService.showTables();
+        StringBuilder response = new StringBuilder("Tables in database:\n");
+        for (String table : tables) {
+            response.append("- ").append(table).append("\n");
+        }
+        return response.toString();
+    }
+
 }

@@ -43,5 +43,9 @@ public class DatabaseManagementService implements IDatabaseManagementService {
     return database;
   }
 
+  public List<String> showTables(){
+    List<String> keysList = new ArrayList<>(database.keySet());
+    return keysList;
+  }
 
 }
