@@ -67,9 +67,7 @@ public class DistributedService {
     public void createTableColDistributed(String tableName, List<String> columns, List<String> type){
 
         List<Type> typeList = type.stream().map(Type::valueOf).collect(Collectors.toList());
-        for (Type t : typeList) {
-            System.out.println(t);
-        }
+
         databaseManagementService.createTableCol(tableName, columns, typeList);
         String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"};
 
