@@ -9,11 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/selectdistributed")
@@ -28,5 +24,13 @@ public class SelectDistributedController {
         LOGGER.info("Receiving select * from "+tableName+" request");
         return distributedService.selectAllDistributed(tableName);
     }
+
+    @PostMapping("/selectcols")
+    public Map<String, List<Object>> selectcols(@RequestParam String tableName, @RequestBody List<String> col_names) {
+        LOGGER.info("Receiving select "+col_names.toString()+" from "+tableName+" request");
+        return distributedService.select_colsDistributed(tableName,col_names);
+    }
+
+
 
 }

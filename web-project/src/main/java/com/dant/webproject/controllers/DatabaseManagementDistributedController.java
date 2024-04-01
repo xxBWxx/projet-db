@@ -46,5 +46,4 @@ public class DatabaseManagementDistributedController {
         distributedService.createTableDistributed(tableName);
         return ResponseEntity.ok("The table "+tableName+" was created successfully");
     }
-
 }

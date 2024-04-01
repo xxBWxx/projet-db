@@ -27,8 +27,8 @@ public class SelectController {
         return selectService.selectAll(tableName);
     }
 
-    @GetMapping("/selectcols")
-    public Map<String, List<Object>> selectcols(@RequestParam String tableName,@RequestBody String[]col_names) {
+    @PostMapping("/selectcols")
+    public Map<String, List<Object>> selectcols(@RequestParam String tableName,@RequestBody List<String> col_names) {
         return selectService.select_cols(tableName,col_names);
     }
 

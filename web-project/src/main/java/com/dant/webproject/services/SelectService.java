@@ -27,7 +27,7 @@ public class SelectService implements ISelectService{
         return res;
     }
 
-    public Map<String, List<Object>> select_cols(String tableName, String[]col_names){
+    public Map<String, List<Object>> select_cols(String tableName, List<String> col_names){
         // Récupérer les données de la table
         Map<String, Column> tableData = databaseManagementService.getDatabase().get(tableName);
         // Vérifier si la table existe dans la base de données

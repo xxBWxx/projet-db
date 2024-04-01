@@ -1,6 +1,7 @@
 package com.dant.webproject.services;
 
 import com.dant.webproject.dbcomponents.Type;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -34,35 +35,6 @@ public class DistributedService {
         this.tableModificationService=tableModificationService;
     }
 
-
-    public Map<String, List<Object>> selectAllDistributed(String tableName) {
-
-        Map<String, List<Object>> value = new HashMap<>();
-        selectService.selectAll(tableName).forEach((key, val) -> {
-            if (!value.containsKey(key)) {
-                value.put(key, new ArrayList<>());
-            }
-            value.get(key).addAll(val);
-        });
-
-
-        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
-
-        for (String serverUrl : serverUrls) {
-            try {
-                String url = serverUrl + "/select/selectallfrom?tableName=" + tableName;
-
-                // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
-                Map<String, List<String>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<String>>>() {}).getBody();
-                result.forEach((key, val) -> value.get(key).addAll(val));
-
-            } catch (Exception e) {
-                e.printStackTrace(); // Handle exception or log it
-            }
-        }
-
-        return value; // Return empty if not found anywhere
-    }
 
     public void createTableColDistributed(String tableName, List<String> columns, List<String> type){
 
@@ -135,7 +107,66 @@ public class DistributedService {
         }
     }
 
-    //Select col from table Where condition
+    public Map<String, List<Object>> selectAllDistributed(String tableName) {
 
+        Map<String, List<Object>> value = new HashMap<>();
+        selectService.selectAll(tableName).forEach((key, val) -> {
+            if (!value.containsKey(key)) {
+                value.put(key, new ArrayList<>());
+            }
+            value.get(key).addAll(val);
+        });
+
+
+        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+
+        for (String serverUrl : serverUrls) {
+            try {
+                String url = serverUrl + "/select/selectallfrom?tableName=" + tableName;
+
+                // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
+                Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
+                result.forEach((key, val) -> value.get(key).addAll(val));
+
+            } catch (Exception e) {
+                e.printStackTrace(); // Handle exception or log it
+            }
+        }
+
+        return value; // Return empty if not found anywhere
+    }
+
+    public Map<String, List<Object>> select_colsDistributed(String tableName, List<String> col_names){
+        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+
+        Map<String, List<Object>> value = new HashMap<>();
+        selectService.select_cols(tableName, col_names).forEach((key, val) -> {
+            if (!value.containsKey(key)) {
+                value.put(key, new ArrayList<>());
+            }
+            value.get(key).addAll(val);
+        });
+
+
+        for (String serverUrl : serverUrls) {
+            try {
+                String url = serverUrl + "/select/selectcols?tableName=" + tableName;
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+
+                HttpEntity<List<String>> requestEntity = new HttpEntity<>(col_names, headers);
+
+                // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
+                Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.POST, requestEntity, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
+                result.forEach((key, val) -> value.get(key).addAll(val));
+
+            } catch (Exception e) {
+                e.printStackTrace(); // Handle exception or log it
+            }
+        }
+
+        return value; // Return empty if not found anywhere
+    }
 
 }
