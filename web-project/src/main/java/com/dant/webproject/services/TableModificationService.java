@@ -1,6 +1,7 @@
 package com.dant.webproject.services;
 
 import com.dant.webproject.dbcomponents.Column;
+import com.dant.webproject.dbcomponents.Type;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -66,8 +67,16 @@ public class TableModificationService implements ISelectService{
         }
     }
 
+    private int compareValues(Object value1, Object value2, Type columnType) {
+        if (columnType == Type.INTEGER) {
+            return ((Integer) value1).compareTo((Integer) value2);
+        } else {
+            return ((String) value1).compareTo((String) value2);
+        }
+    }
+
     //mettre à jour une colonne donnée
-    public void updateColumn(String tableName, String columnName, List<String> newData) {
+    public void updateColumn(String tableName, String columnName, String newData, String conditionColumn, Object conditionValue) {
         if (databaseManagementService.getDatabase().get(tableName) == null) {
             throw new IllegalArgumentException(
                     "La table " + tableName + " n'existe pas dans la base de donnees"
@@ -81,12 +90,19 @@ public class TableModificationService implements ISelectService{
             );
         }
 
-        Column new_col=new Column(columnName,table.get(columnName).getType());
+        List<Object> columnData = table.get(columnName).getValues();
+        List<Object> conditionColumnData = table.get(conditionColumn).getValues();
 
-        for(String s : newData)new_col.addValue(s);
-
-        // Mettre à jour les données de la colonne
-        table.put(columnName, new_col);
+        // Parcourir les données de la colonne à mettre à jour
+        for (int i = 0; i < columnData.size(); i++) {
+            // Vérifier si la condition est satisfaite
+            if (compareValues(conditionColumnData.get(i),conditionValue,table.get(conditionColumn).getType()) == 0) {
+                    columnData.set(i, newData);
+            }
+        }
     }
 
+
 }
+
+
