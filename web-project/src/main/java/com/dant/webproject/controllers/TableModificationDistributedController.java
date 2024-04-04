@@ -28,4 +28,9 @@ public class TableModificationDistributedController {
         return ResponseEntity.ok("Insertion realise !");
     }
 
+    @PostMapping("/update_col")
+    public void update_col(@RequestParam String tableName, @RequestParam String columnName, @RequestParam String newData, @RequestParam String conditionColumn, @RequestParam Object conditionValue) {
+        distributedService.updateColumnDistributed(tableName,columnName,newData,conditionColumn,conditionValue);
+    }
+
 }

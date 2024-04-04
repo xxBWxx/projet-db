@@ -4,6 +4,7 @@ import com.dant.webproject.dbcomponents.Type;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -168,5 +169,107 @@ public class DistributedService {
 
         return value; // Return empty if not found anywhere
     }
+
+    public Map<String, List<Object>> selectWhere_eqDistributed(String tableName, String colName, String val) {
+
+        Map<String, List<Object>> value = new HashMap<>();
+        selectService.selectWhere_eq(tableName, colName, val).forEach((key, v) -> {
+            if (!value.containsKey(key)) {
+                value.put(key, new ArrayList<>());
+            }
+            value.get(key).addAll(v);
+        });
+
+
+        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+
+        for (String serverUrl : serverUrls) {
+            try {
+                String url = serverUrl + "/select/select_where_eq_from?tableName=" + tableName +"?colName="+colName+"?val="+val;
+
+                // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
+                Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
+                result.forEach((key, v) -> value.get(key).addAll(v));
+
+            } catch (Exception e) {
+                e.printStackTrace(); // Handle exception or log it
+            }
+        }
+
+        return value; // Return empty if not found anywhere
+    }
+
+    public Map<String, List<Object>> selectWhere_supDistributed(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
+        Map<String, List<Object>> value = new HashMap<>();
+        selectService.selectWhere_sup(tableName, colName, val).forEach((key, v) -> {
+            if (!value.containsKey(key)) {
+                value.put(key, new ArrayList<>());
+            }
+            value.get(key).addAll(v);
+        });
+
+
+        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+
+        for (String serverUrl : serverUrls) {
+            try {
+                String url = serverUrl + "/select/select_where_sup_from?tableName=" + tableName +"?colName="+colName+"?val="+val;
+
+                // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
+                Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
+                result.forEach((key, v) -> value.get(key).addAll(v));
+
+            } catch (Exception e) {
+                e.printStackTrace(); // Handle exception or log it
+            }
+        }
+
+        return value; // Return empty if not found anywhere
+    }
+
+    public Map<String, List<Object>> selectWhere_infDistributed(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
+        Map<String, List<Object>> value = new HashMap<>();
+        selectService.selectWhere_inf(tableName, colName, val).forEach((key, v) -> {
+            if (!value.containsKey(key)) {
+                value.put(key, new ArrayList<>());
+            }
+            value.get(key).addAll(v);
+        });
+
+
+        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+
+        for (String serverUrl : serverUrls) {
+            try {
+                String url = serverUrl + "/select/select_where_inf_from?tableName=" + tableName +"?colName="+colName+"?val="+val;
+
+                // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
+                Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
+                result.forEach((key, v) -> value.get(key).addAll(v));
+
+            } catch (Exception e) {
+                e.printStackTrace(); // Handle exception or log it
+            }
+        }
+
+        return value; // Return empty if not found anywhere
+    }
+
+    public void updateColumnDistributed(String tableName, String columnName, String newData, String conditionColumn, Object conditionValue){
+        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+        tableModificationService.updateColumn(tableName, columnName, newData, conditionColumn, conditionValue);
+        for (String serverUrl : serverUrls) {
+            try {
+                String url = serverUrl + "/tablemodification/update_col?tableName=" + tableName +"?columnName="+columnName+"?conditionColumn="+conditionColumn+"?conditionValue="+conditionValue;
+
+
+                restTemplate.exchange(serverUrl, HttpMethod.POST, null, Void.class);
+
+            } catch (Exception e) {
+                e.printStackTrace(); // Handle exception or log it
+            }
+        }
+    }
+
 
 }

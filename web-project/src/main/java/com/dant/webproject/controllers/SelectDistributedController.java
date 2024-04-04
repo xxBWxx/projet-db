@@ -31,6 +31,21 @@ public class SelectDistributedController {
         return distributedService.select_colsDistributed(tableName,col_names);
     }
 
+    @GetMapping("/select_where_eq_from")
+    public Map<String, List<Object>> selectWhere_eq(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
+        LOGGER.info("Receiving select * from "+tableName+" WHERE "+colName+"="+val);
+        return distributedService.selectWhere_eqDistributed(tableName,colName,val);
+    }
 
+    @GetMapping("/select_where_sup_from")
+    public Map<String, List<Object>> selectWhere_sup(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
+        LOGGER.info("Receiving select * from "+tableName+" WHERE "+colName+">"+val);
+        return distributedService.selectWhere_supDistributed(tableName,colName,val);
+    }
 
+    @GetMapping("/select_where_inf_from")
+    public Map<String, List<Object>> selectWhere_inf(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
+        LOGGER.info("Receiving select * from "+tableName+" WHERE "+colName+"<"+val);
+        return distributedService.selectWhere_infDistributed(tableName,colName,val);
+    }
 }

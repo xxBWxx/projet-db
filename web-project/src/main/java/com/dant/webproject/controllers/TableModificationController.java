@@ -33,9 +33,7 @@ public class TableModificationController {
 
     @PostMapping("/update_col")
     public void update_col(@RequestParam String tableName, @RequestParam String columnName, @RequestParam String newData, @RequestParam String conditionColumn, @RequestParam Object conditionValue) {
-
         tableModificationService.updateColumn(tableName,columnName,newData,conditionColumn,conditionValue);
-
     }
 
 }
