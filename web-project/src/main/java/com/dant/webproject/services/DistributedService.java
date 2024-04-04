@@ -185,7 +185,7 @@ public class DistributedService {
 
         for (String serverUrl : serverUrls) {
             try {
-                String url = serverUrl + "/select/select_where_eq_from?tableName=" + tableName +"?colName="+colName+"?val="+val;
+                String url = serverUrl + "/select/select_where_eq_from?tableName=" + tableName +"&colName="+colName+"&val="+val;
 
                 // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
                 Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
@@ -213,7 +213,7 @@ public class DistributedService {
 
         for (String serverUrl : serverUrls) {
             try {
-                String url = serverUrl + "/select/select_where_sup_from?tableName=" + tableName +"?colName="+colName+"?val="+val;
+                String url = serverUrl + "/select/select_where_sup_from?tableName=" + tableName +"&colName="+colName+"&val="+val;
 
                 // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
                 Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
@@ -241,7 +241,7 @@ public class DistributedService {
 
         for (String serverUrl : serverUrls) {
             try {
-                String url = serverUrl + "/select/select_where_inf_from?tableName=" + tableName +"?colName="+colName+"?val="+val;
+                String url = serverUrl + "/select/select_where_inf_from?tableName=" + tableName +"&colName="+colName+"&val="+val;
 
                 // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
                 Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
@@ -260,10 +260,14 @@ public class DistributedService {
         tableModificationService.updateColumn(tableName, columnName, newData, conditionColumn, conditionValue);
         for (String serverUrl : serverUrls) {
             try {
-                String url = serverUrl + "/tablemodification/update_col?tableName=" + tableName +"?columnName="+columnName+"?conditionColumn="+conditionColumn+"?conditionValue="+conditionValue;
+                String url = serverUrl + "/tablemodification/update_col?tableName=" + tableName
+                        +"&columnName="+columnName
+                        +"&newData="+newData
+                        +"&conditionColumn="+conditionColumn
+                        +"&conditionValue="+conditionValue;
 
 
-                restTemplate.exchange(serverUrl, HttpMethod.POST, null, Void.class);
+                restTemplate.exchange(url, HttpMethod.POST, null, Void.class);
 
             } catch (Exception e) {
                 e.printStackTrace(); // Handle exception or log it
