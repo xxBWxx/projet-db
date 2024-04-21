@@ -184,9 +184,9 @@ public class ParquetReader {
 
   public static String uploadFile(InputStream fileStream) throws IOException {
     try {
-     Files.copy(fileStream, new File("file.txt").toPath());
+     Files.copy(fileStream, new File("tempFile.txt").toPath());
 
-     return Files.readString(new File("file.txt").toPath());
+     return Files.readString(new File("tempFile.txt").toPath());
     } catch (Exception e) {
 
       return e.getMessage();

@@ -22,7 +22,7 @@ public class LoadServiceController {
     @PostMapping("/uploadFile")
     public ResponseEntity<String> uploadFile(HttpServletRequest request) throws IOException {
         String res = ParquetReader.uploadFile(request.getInputStream());
-
+        ParquetReader.parseParquetFile(res);
         return ResponseEntity.ok(res);
     }
 }
