@@ -1,27 +1,29 @@
 package com.dant.webproject.utils;
 
-import com.dant.webproject.services.DatabaseService;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.print.DocFlavor.STRING;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.column.page.PageReadStore;
-import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroup;
 import org.apache.parquet.example.data.simple.convert.GroupRecordConverter;
-import org.apache.parquet.format.converter.ParquetMetadataConverter;
 import org.apache.parquet.hadoop.ParquetFileReader;
-import org.apache.parquet.hadoop.metadata.ParquetMetadata;
 import org.apache.parquet.hadoop.util.HadoopInputFile;
 import org.apache.parquet.io.ColumnIOFactory;
 import org.apache.parquet.io.MessageColumnIO;
 import org.apache.parquet.io.RecordReader;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
+
+import com.dant.webproject.services.DatabaseService;
+
 
 public class ParquetReader {
 
@@ -180,5 +182,16 @@ public class ParquetReader {
     String relativePath = splittedPath[splittedPath.length - 1];
 
     return relativePath.split("\\.")[0];
+  }
+
+  public static String uploadFile(InputStream fileStream) throws IOException {
+    try {
+     Files.copy(fileStream, new File("file.txt").toPath());
+
+     return Files.readString(new File("file.txt").toPath());
+    } catch (Exception e) {
+
+      return e.getMessage();
+    }
   }
 }
