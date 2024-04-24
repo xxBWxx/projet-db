@@ -58,62 +58,6 @@ public class SelectService implements ISelectService{
 
     }
 
-    public Map<String, List<Object>> selectWhere_eq(String table, String columnName, String value) {
-        // Récupérer les données de la table
-        Map<String, Column> tableData = databaseManagementService.getDatabase().get(table);
-        // Vérifier si la table existe dans la base de données
-        if (tableData == null) {
-            throw new IllegalArgumentException(
-                    "Table non trouvée dans la base de données"
-            );
-        }
-
-        // Vérifier si la colonne existe dans les données de la table
-        if (!tableData.containsKey(columnName)) {
-            throw new IllegalArgumentException(
-                    "La colonne " + columnName + " n'existe pas dans la table"
-            );
-        }
-
-        Type columnType = tableData.get(columnName).getType();
-
-        Object realValue;
-
-        if (columnType == Type.INTEGER) realValue = Integer.parseInt(value);
-        else realValue=value;
-
-        // Filtrer les données en fonction de la condition
-        List<Object> columnData = tableData.get(columnName).getValues();
-        Map<String, List<Object>> filteredResult = new LinkedHashMap<>(); // Utilisation de LinkedHashMap pour préserver l'ordre des colonnes
-        List<Integer> indices = new ArrayList<>();
-
-        for (int i = 0; i < columnData.size(); i++) {
-            Object cellValue = columnData.get(i);
-            if (cellValue != null && cellValue.equals(realValue)) {
-                indices.add(i);
-            }
-        }
-
-        if(!indices.isEmpty()){
-            // Ajout des colonnes filtrées dans le résultat
-            for (Map.Entry<String, Column> entry : tableData.entrySet()) {
-                String currentColumn = entry.getKey();
-                List<Object> columnValues = entry.getValue().getValues();
-                List<Object> filteredColumnData = new ArrayList<>();
-
-                for (Integer ind : indices) {
-                    filteredColumnData.add(columnValues.get(ind));
-                }
-
-                filteredResult.put(currentColumn, filteredColumnData);
-            }
-        }
-
-
-
-        return filteredResult;
-    }
-
     public Map<String, List<Object>> select_where(String table, List<Operande> listop) {
         Map<String, Column> tableData = databaseManagementService.getDatabase().get(table);
         if (tableData == null) {
