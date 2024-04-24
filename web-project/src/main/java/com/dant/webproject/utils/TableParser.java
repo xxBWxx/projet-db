@@ -8,12 +8,11 @@ import java.util.logging.*;
 import org.apache.log4j.chainsaw.Main;
 
 public class TableParser {
+  private static final Logger logger = Logger.getLogger(Main.class.getName());
 
   public static Map<String, List<Float>> parseColumnsToFloat(
     Map<String, List<String>> table
   ) {
-    final Logger logger = Logger.getLogger(Main.class.getName());
-
     Map<String, List<Float>> res = new HashMap<>();
     Float parsedValue;
     List<Float> parsedValues;
@@ -31,8 +30,7 @@ public class TableParser {
         try {
           parsedValue = Float.parseFloat(value);
         } catch (NumberFormatException e) {
-          logger.log(
-            Level.WARNING,
+          logger.warning(
             "Cannot parse " + value + ". Replacing it with a 0."
           );
         } finally {

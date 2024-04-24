@@ -1,7 +1,7 @@
 package com.dant.webproject;
 
 import com.dant.webproject.services.DatabaseService;
-import com.dant.webproject.utils.ParquetReader;
+import com.dant.webproject.utils.ParquetManager;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.boot.CommandLineRunner;

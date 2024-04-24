@@ -24,10 +24,24 @@ import org.apache.parquet.schema.Type;
 
 import com.dant.webproject.services.DatabaseService;
 
+import java.util.logging.*;
+import org.apache.log4j.chainsaw.Main;
 
-public class ParquetReader {
 
-  private static Map<String, String> getFieldValueMap(SimpleGroup group) {
+public class ParquetManager {
+  private static final Logger logger = Logger.getLogger(Main.class.getName());
+  
+  private static ParquetManager parquetManager = null;
+
+  public static ParquetManager getParquetManager() {
+    if (parquetManager == null) {
+      parquetManager = new ParquetManager();
+    }
+    
+    return parquetManager;
+  }
+
+  private Map<String, String> getFieldValueMap(SimpleGroup group) {
     Map<String, String> res = new HashMap<>();
 
     int fieldCount = group.getType().getFieldCount();
@@ -47,7 +61,7 @@ public class ParquetReader {
   }
 
   // TODO riu
-  private static List<String> getValues(SimpleGroup group) {
+  private List<String> getValues(SimpleGroup group) {
     List<String> res = new ArrayList<>();
 
     int fieldCount = group.getType().getFieldCount();
@@ -66,7 +80,7 @@ public class ParquetReader {
   }
 
   // TODO riu
-  private static String getValueForField(SimpleGroup group, String fieldName) {
+  private String getValueForField(SimpleGroup group, String fieldName) {
     String res = "-";
 
     int fieldCount = group.getType().getFieldCount();
@@ -83,7 +97,7 @@ public class ParquetReader {
   }
 
   // TODO riu
-  private static List<String> getFieldNames(SimpleGroup group) {
+  private List<String> getFieldNames(SimpleGroup group) {
     int fieldCount = group.getType().getFieldCount();
 
     List<String> res = new ArrayList<>();
@@ -98,7 +112,7 @@ public class ParquetReader {
   }
 
   // TODO riu
-  public static void readParquetFile(String filePath) {
+  public void readParquetFile(String filePath) {
     List<SimpleGroup> simpleGroups = new ArrayList<>();
 
     try {
@@ -127,7 +141,7 @@ public class ParquetReader {
     }
   }
 
-  public static void parseParquetFile(String filePath) {
+  public void parseParquetFile(String filePath) {
     try {
       ParquetFileReader reader = ParquetFileReader.open(
         HadoopInputFile.fromPath(new Path(filePath), new Configuration())
@@ -175,18 +189,20 @@ public class ParquetReader {
     }
   }
 
-  private static String createTableNameFromFilePath(String filePath) {
+  private String createTableNameFromFilePath(String filePath) {
     String[] splittedPath = filePath.split("\\\\");
     String relativePath = splittedPath[splittedPath.length - 1];
 
     return relativePath.split("\\.")[0];
   }
 
-  public static String uploadFile(InputStream fileStream) throws IOException {
+  public String uploadFile(InputStream fileStream) throws IOException {
     try {
-     Files.copy(fileStream, new File("tempFile.txt").toPath());
+    //  Files.copy(fileStream, new File("tempFile.txt").toPath());
 
-     return Files.readString(new File("tempFile.txt").toPath());
+      logger.info("Uploaded to database." );
+      
+      return Files.readString(new File("tempFile.txt").toPath());
     } catch (Exception e) {
 
       return e.getMessage();
