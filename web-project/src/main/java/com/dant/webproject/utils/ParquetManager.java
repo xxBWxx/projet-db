@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.log4j.chainsaw.Main;
 import org.apache.parquet.column.page.PageReadStore;
 import org.apache.parquet.example.data.simple.SimpleGroup;
 import org.apache.parquet.example.data.simple.convert.GroupRecordConverter;
@@ -21,13 +22,38 @@ import org.apache.parquet.io.MessageColumnIO;
 import org.apache.parquet.io.RecordReader;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import com.dant.webproject.controllers.DatabaseManagementController;
+import com.dant.webproject.dbcomponents.Column;
+import com.dant.webproject.services.DatabaseManagementService;
 import com.dant.webproject.services.DatabaseService;
 
+public class ParquetManager {
+  @Autowired
+  private final DatabaseManagementService databaseManagementService;
 
-public class ParquetReader {
+  @Autowired
+  private ParquetManager(DatabaseManagementService databaseManagementService) {
+    this.databaseManagementService = databaseManagementService;
+  }
 
-  private static Map<String, String> getFieldValueMap(SimpleGroup group) {
+  private static final Logger logger = LoggerFactory.getLogger(Main.class.getName());
+
+  private static ParquetManager parquetManager = null;
+
+  public static synchronized ParquetManager getParquetManager(DatabaseManagementService databaseManagementService) {
+    if (parquetManager == null) {
+      parquetManager = new ParquetManager(databaseManagementService);
+    }
+
+    return parquetManager;
+  }
+
+  private Map<String, String> getFieldValueMap(SimpleGroup group) {
     Map<String, String> res = new HashMap<>();
 
     int fieldCount = group.getType().getFieldCount();
@@ -47,7 +73,7 @@ public class ParquetReader {
   }
 
   // TODO riu
-  private static List<String> getValues(SimpleGroup group) {
+  private List<String> getValues(SimpleGroup group) {
     List<String> res = new ArrayList<>();
 
     int fieldCount = group.getType().getFieldCount();
@@ -66,7 +92,7 @@ public class ParquetReader {
   }
 
   // TODO riu
-  private static String getValueForField(SimpleGroup group, String fieldName) {
+  private String getValueForField(SimpleGroup group, String fieldName) {
     String res = "-";
 
     int fieldCount = group.getType().getFieldCount();
@@ -83,7 +109,7 @@ public class ParquetReader {
   }
 
   // TODO riu
-  private static List<String> getFieldNames(SimpleGroup group) {
+  private List<String> getFieldNames(SimpleGroup group) {
     int fieldCount = group.getType().getFieldCount();
 
     List<String> res = new ArrayList<>();
@@ -98,13 +124,12 @@ public class ParquetReader {
   }
 
   // TODO riu
-  public static void readParquetFile(String filePath) {
+  public void readParquetFile(String filePath) {
     List<SimpleGroup> simpleGroups = new ArrayList<>();
 
     try {
       ParquetFileReader reader = ParquetFileReader.open(
-        HadoopInputFile.fromPath(new Path(filePath), new Configuration())
-      );
+          HadoopInputFile.fromPath(new Path(filePath), new Configuration()));
       MessageType schema = reader.getFooter().getFileMetaData().getSchema();
       List<Type> fields = schema.getFields();
       PageReadStore pages;
@@ -112,9 +137,8 @@ public class ParquetReader {
         long rows = pages.getRowCount();
         MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
         RecordReader recordReader = columnIO.getRecordReader(
-          pages,
-          new GroupRecordConverter(schema)
-        );
+            pages,
+            new GroupRecordConverter(schema));
         for (int i = 0; i < 2; i++) {
           SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
           simpleGroup.getFieldRepetitionCount(0);
@@ -127,11 +151,10 @@ public class ParquetReader {
     }
   }
 
-  public static void parseParquetFile(String filePath) {
+  public void parseParquetFile(String filePath, String tableName) {
     try {
       ParquetFileReader reader = ParquetFileReader.open(
-        HadoopInputFile.fromPath(new Path(filePath), new Configuration())
-      );
+          HadoopInputFile.fromPath(new Path(filePath), new Configuration()));
       MessageType schema = reader.getFooter().getFileMetaData().getSchema();
       List<Type> fields = schema.getFields();
 
@@ -142,8 +165,8 @@ public class ParquetReader {
         fieldMap.put(field.toString().split("\\s")[2], new ArrayList<>());
       }
 
-      String tableName = createTableNameFromFilePath(filePath);
-      DatabaseService.getDatabase().put(tableName, fieldMap);
+      // DatabaseService.getDatabase().put(tableName, fieldMap);
+      databaseManagementService.createTable(tableName);
 
       PageReadStore pages;
       while ((pages = reader.readNextRowGroup()) != null) {
@@ -151,9 +174,8 @@ public class ParquetReader {
 
         MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
         RecordReader recordReader = columnIO.getRecordReader(
-          pages,
-          new GroupRecordConverter(schema)
-        );
+            pages,
+            new GroupRecordConverter(schema));
 
         // TODO: replace 1 with rows
         for (int i = 0; i < 1; i++) {
@@ -167,29 +189,47 @@ public class ParquetReader {
           }
         }
 
+        // String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+
+        // for (String serverUrl : serverUrls) {
+        // try {
+        // String url = serverUrl + "/select/selectallfrom?tableName=" + tableName;
+
+        // // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
+        // Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET,
+        // null, new ParameterizedTypeReference<Map<String, List<Object>>>()
+        // {}).getBody();
+        // result.forEach((key, val) -> value.get(key).addAll(val));
+
+        // } catch (Exception e) {
+        // e.printStackTrace(); // Handle exception or log it
+        // }
+        // }
+
         // System.out.println(DatabaseService.getDatabase());
       }
       reader.close();
     } catch (IOException e) {
-      System.out.println(e.getMessage());
+      e.printStackTrace();
     }
   }
 
-  private static String createTableNameFromFilePath(String filePath) {
+  private String createTableNameFromFilePath(String filePath) {
     String[] splittedPath = filePath.split("\\\\");
     String relativePath = splittedPath[splittedPath.length - 1];
 
     return relativePath.split("\\.")[0];
   }
 
-  public static String uploadFile(InputStream fileStream) throws IOException {
-    try {
-     Files.copy(fileStream, new File("tempFile.txt").toPath());
+  public String uploadFile(InputStream fileStream) throws IOException {
+    Files.copy(fileStream, new File("tempFile.parquet").toPath());
 
-     return Files.readString(new File("tempFile.txt").toPath());
-    } catch (Exception e) {
+    // logger.info("Uploaded to database.");
 
-      return e.getMessage();
-    }
+    return "tempFile.parquet";
+  }
+
+  public void deleteFile(String filePath) throws IOException {
+    Files.delete(new File(filePath).toPath());
   }
 }

@@ -9,20 +9,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dant.webproject.services.LoadService;
-import com.dant.webproject.utils.ParquetReader;
+import com.dant.webproject.utils.ParquetManager;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/load")
-public class LoadServiceController {
+public class LoadController {
     @Autowired
     private LoadService loadService;
 
-    @PostMapping("/uploadFile")
-    public ResponseEntity<String> uploadFile(HttpServletRequest request) throws IOException {
-        String res = ParquetReader.uploadFile(request.getInputStream());
-        ParquetReader.parseParquetFile(res);
-        return ResponseEntity.ok(res);
+    @PostMapping("/loadFile")
+    public ResponseEntity<String> loadFile(HttpServletRequest request) throws IOException {
+        return loadService.loadFile(request);
     }
 }

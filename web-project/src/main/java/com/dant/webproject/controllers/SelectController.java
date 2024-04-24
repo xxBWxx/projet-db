@@ -21,30 +21,32 @@ public class SelectController {
     @Autowired
     private SelectService selectService;
 
-
-    @GetMapping("/selectallfrom")
+    @GetMapping("/selectAllFrom")
     public Map<String, List<Object>> selectAll(@RequestParam String tableName) {
         return selectService.selectAll(tableName);
     }
 
-    @PostMapping("/selectcols")
-    public Map<String, List<Object>> selectcols(@RequestParam String tableName,@RequestBody List<String> col_names) {
-        return selectService.select_cols(tableName,col_names);
+    @PostMapping("/selectCols")
+    public Map<String, List<Object>> selectcols(@RequestParam String tableName, @RequestBody List<String> col_names) {
+        return selectService.select_cols(tableName, col_names);
     }
 
-    @GetMapping("/select_where_eq_from")
-    public Map<String, List<Object>> selectWhere_eq(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
-        return selectService.selectWhere_eq(tableName,colName,val);
+    @GetMapping("/selectWhereEqFrom")
+    public Map<String, List<Object>> selectWhere_eq(@RequestParam String tableName, @RequestParam String colName,
+            @RequestParam String val) {
+        return selectService.selectWhere_eq(tableName, colName, val);
     }
 
-    @GetMapping("/select_where_sup_from")
-    public Map<String, List<Object>> selectWhere_sup(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
-        return selectService.selectWhere_sup(tableName,colName,val);
+    @GetMapping("/selectWhereSupFrom")
+    public Map<String, List<Object>> selectWhere_sup(@RequestParam String tableName, @RequestParam String colName,
+            @RequestParam String val) {
+        return selectService.selectWhere_sup(tableName, colName, val);
     }
 
-    @GetMapping("/select_where_inf_from")
-    public Map<String, List<Object>> selectWhere_inf(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
-        return selectService.selectWhere_inf(tableName,colName,val);
+    @GetMapping("/selectWhereInfFrom")
+    public Map<String, List<Object>> selectWhere_inf(@RequestParam String tableName, @RequestParam String colName,
+            @RequestParam String val) {
+        return selectService.selectWhere_inf(tableName, colName, val);
     }
 
 }

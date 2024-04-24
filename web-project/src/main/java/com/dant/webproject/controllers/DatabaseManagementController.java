@@ -10,17 +10,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/databasemanagement")
+@RequestMapping("/databaseManagement")
 public class DatabaseManagementController {
-
     @Autowired
     private DatabaseManagementService databaseManagementService;
 
-
     @PostMapping("/createTableCol")
     public void createTableCol(@RequestParam String tableName, @RequestBody Map<String, Object> requestData) {
-        List<String> col_name = (List<String>)(requestData.get("col_name"));
-        List<String> type_name = (List<String>)(requestData.get("type"));
+        List<String> col_name = (List<String>) (requestData.get("col_name"));
+        List<String> type_name = (List<String>) (requestData.get("type"));
         List<Type> typeList = type_name.stream().map(Type::valueOf).collect(Collectors.toList());
         databaseManagementService.createTableCol(tableName, col_name, typeList);
     }
@@ -39,5 +37,4 @@ public class DatabaseManagementController {
         }
         return response.toString();
     }
-
 }
