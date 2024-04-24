@@ -12,40 +12,44 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/selectdistributed")
+@RequestMapping("/selectDistributed")
 public class SelectDistributedController {
 
     @Autowired
     private DistributedService distributedService;
 
-    private static final Logger LOGGER  = LoggerFactory.getLogger(SelectDistributedController.class);
-    @GetMapping("/selectallfrom")
+    private static final Logger LOGGER = LoggerFactory.getLogger(SelectDistributedController.class);
+
+    @GetMapping("/selectAllFrom")
     public Map<String, List<Object>> selectAll(@RequestParam String tableName) {
-        LOGGER.info("Receiving select * from "+tableName+" request");
+        LOGGER.info("Receiving select * from " + tableName + " request");
         return distributedService.selectAllDistributed(tableName);
     }
 
-    @PostMapping("/selectcols")
+    @PostMapping("/selectCols")
     public Map<String, List<Object>> selectcols(@RequestParam String tableName, @RequestBody List<String> col_names) {
-        LOGGER.info("Receiving select "+col_names.toString()+" from "+tableName+" request");
-        return distributedService.select_colsDistributed(tableName,col_names);
+        LOGGER.info("Receiving select " + col_names.toString() + " from " + tableName + " request");
+        return distributedService.select_colsDistributed(tableName, col_names);
     }
 
-    @GetMapping("/select_where_eq_from")
-    public Map<String, List<Object>> selectWhere_eq(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
-        LOGGER.info("Receiving select * from "+tableName+" WHERE "+colName+"="+val);
-        return distributedService.selectWhere_eqDistributed(tableName,colName,val);
+    @GetMapping("/selectWhereEqFrom")
+    public Map<String, List<Object>> selectWhere_eq(@RequestParam String tableName, @RequestParam String colName,
+            @RequestParam String val) {
+        LOGGER.info("Receiving select * from " + tableName + " WHERE " + colName + "=" + val);
+        return distributedService.selectWhere_eqDistributed(tableName, colName, val);
     }
 
-    @GetMapping("/select_where_sup_from")
-    public Map<String, List<Object>> selectWhere_sup(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
-        LOGGER.info("Receiving select * from "+tableName+" WHERE "+colName+">"+val);
-        return distributedService.selectWhere_supDistributed(tableName,colName,val);
+    @GetMapping("/selectWhereSupFrom")
+    public Map<String, List<Object>> selectWhere_sup(@RequestParam String tableName, @RequestParam String colName,
+            @RequestParam String val) {
+        LOGGER.info("Receiving select * from " + tableName + " WHERE " + colName + ">" + val);
+        return distributedService.selectWhere_supDistributed(tableName, colName, val);
     }
 
-    @GetMapping("/select_where_inf_from")
-    public Map<String, List<Object>> selectWhere_inf(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
-        LOGGER.info("Receiving select * from "+tableName+" WHERE "+colName+"<"+val);
-        return distributedService.selectWhere_infDistributed(tableName,colName,val);
+    @GetMapping("/selectWhereInfFrom")
+    public Map<String, List<Object>> selectWhere_inf(@RequestParam String tableName, @RequestParam String colName,
+            @RequestParam String val) {
+        LOGGER.info("Receiving select * from " + tableName + " WHERE " + colName + "<" + val);
+        return distributedService.selectWhere_infDistributed(tableName, colName, val);
     }
 }

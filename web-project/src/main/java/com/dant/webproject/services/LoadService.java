@@ -27,11 +27,11 @@ public class LoadService implements ILoadService {
     this.parquetManager = ParquetManager.getParquetManager(this.databaseManagementService);
   }
 
-  public ResponseEntity<String> loadFile(HttpServletRequest request) throws IOException {
+  public ResponseEntity<String> loadFileToTable(HttpServletRequest request, String tableName) throws IOException {
     String res = parquetManager.uploadFile(request.getInputStream());
-    parquetManager.parseParquetFile(res, "table");
+    parquetManager.parseParquetFile(res, tableName);
     parquetManager.deleteFile(res);
 
-    return ResponseEntity.ok(res + " is successfully loaded to database.");
+    return ResponseEntity.ok("File data is successfully loaded to database.");
   }
 }

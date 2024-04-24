@@ -16,11 +16,11 @@ public class AgregationService {
     private final DatabaseManagementService databaseManagementService;
 
     @Autowired
-    public AgregationService(DatabaseManagementService databaseManagementService){
-        this.databaseManagementService=databaseManagementService;
+    public AgregationService(DatabaseManagementService databaseManagementService) {
+        this.databaseManagementService = databaseManagementService;
     }
 
-    public Object agregation(AgregationType type,String nametable, String namecolumn) {
+    public Object agregation(AgregationType type, String nametable, String namecolumn) {
 
         Map<String, Column> table = databaseManagementService.getDatabase().get(nametable);
         Column column = table.get(namecolumn);
@@ -38,8 +38,8 @@ public class AgregationService {
         }
     }
 
-    public int sum(Column c){
-        if(c.getType() == Type.STRING){
+    public int sum(Column c) {
+        if (c.getType() == Type.STRING) {
             throw new IllegalArgumentException("Le type de la colonne n'est pas INTEGER");
         }
         List<Object> values = c.getValues();
@@ -53,7 +53,7 @@ public class AgregationService {
     public Object max(Column c) {
         List<Object> values = c.getValues();
         if (values.isEmpty()) {
-            return null;  // Retourne null si la liste est vide
+            return null; // Retourne null si la liste est vide
         }
 
         Object max = values.get(0);
@@ -73,7 +73,7 @@ public class AgregationService {
     public Object min(Column c) {
         List<Object> values = c.getValues();
         if (values.isEmpty()) {
-            return null;  // Retourne null si la liste est vide
+            return null; // Retourne null si la liste est vide
         }
 
         Object min = values.get(0);
@@ -90,10 +90,9 @@ public class AgregationService {
         return min;
     }
 
-
     public int count(Column c) {
         List<Object> values = c.getValues();
-        return values.size();  // Retourne le nombre d'éléments dans la liste
+        return values.size(); // Retourne le nombre d'éléments dans la liste
     }
 
 }

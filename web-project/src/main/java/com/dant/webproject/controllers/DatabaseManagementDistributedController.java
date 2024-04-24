@@ -23,27 +23,28 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dant.webproject.services.DatabaseService;
 
 @RestController
-@RequestMapping("/databasemanagementdistributed")
+@RequestMapping("/databaseManagementDistributed")
 public class DatabaseManagementDistributedController {
 
     @Autowired
     private DistributedService distributedService;
 
-    private static final Logger LOGGER  = LoggerFactory.getLogger(DatabaseManagementDistributedController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseManagementDistributedController.class);
 
     @PostMapping("/createTableCol")
-    public ResponseEntity<String> createTableCol(@RequestParam String tableName, @RequestBody Map<String, Object> requestData) {
-        LOGGER.info("Receiving request for the creation of table "+tableName);
-        List<String> col_name = (List<String>)(requestData.get("col_name"));
-        List<String> type_name = (List<String>)(requestData.get("type"));
+    public ResponseEntity<String> createTableCol(@RequestParam String tableName,
+            @RequestBody Map<String, Object> requestData) {
+        LOGGER.info("Receiving request for the creation of table " + tableName);
+        List<String> col_name = (List<String>) (requestData.get("col_name"));
+        List<String> type_name = (List<String>) (requestData.get("type"));
         distributedService.createTableColDistributed(tableName, col_name, type_name);
-        return ResponseEntity.ok("The table "+tableName+" was created successfully");
+        return ResponseEntity.ok("The table " + tableName + " was created successfully");
     }
 
     @PostMapping("/createTable")
     public ResponseEntity<String> createTable(@RequestParam String tableName) {
-        LOGGER.info("Receiving request for the creation of table "+tableName);
+        LOGGER.info("Receiving request for the creation of table " + tableName);
         distributedService.createTableDistributed(tableName);
-        return ResponseEntity.ok("The table "+tableName+" was created successfully");
+        return ResponseEntity.ok("The table " + tableName + " was created successfully");
     }
 }

@@ -11,26 +11,27 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/tablemodificationdistributed")
+@RequestMapping("/tableModificationDistributed")
 public class TableModificationDistributedController {
 
     @Autowired
     private DistributedService distributedService;
 
-    private static final Logger LOGGER  = LoggerFactory.getLogger(TableModificationDistributedController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TableModificationDistributedController.class);
 
     @PostMapping("/insert")
     public ResponseEntity<String> insert(@RequestParam String table, @RequestBody Map<String, Object> requestData) {
-        List<String> col_name = (List<String>)(requestData.get("col_name"));
-        List<List<String>> value = (List<List<String>>)(requestData.get("value"));
+        List<String> col_name = (List<String>) (requestData.get("col_name"));
+        List<List<String>> value = (List<List<String>>) (requestData.get("value"));
         LOGGER.info("Receiving request to insert values");
         distributedService.insertDistributed(table, col_name, value);
         return ResponseEntity.ok("Insertion realise !");
     }
 
-    @PostMapping("/update_col")
-    public void update_col(@RequestParam String tableName, @RequestParam String columnName, @RequestParam String newData, @RequestParam String conditionColumn, @RequestParam Object conditionValue) {
-        distributedService.updateColumnDistributed(tableName,columnName,newData,conditionColumn,conditionValue);
+    @PostMapping("/updateCol")
+    public void update_col(@RequestParam String tableName, @RequestParam String columnName,
+            @RequestParam String newData, @RequestParam String conditionColumn, @RequestParam Object conditionValue) {
+        distributedService.updateColumnDistributed(tableName, columnName, newData, conditionColumn, conditionValue);
     }
 
 }

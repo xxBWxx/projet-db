@@ -66,9 +66,8 @@ public class DatabaseService {
 
   // Méthode pour effectuer une opération de sélection (SELECT)
   public List<Map<String, List<String>>> select(
-    String table,
-    List<String> columnNames
-  ) {
+      String table,
+      List<String> columnNames) {
     List<Map<String, List<String>>> results = new ArrayList<>();
 
     // Vérifier si la table existe dans la base de données
@@ -89,8 +88,7 @@ public class DatabaseService {
         // Vérifier si la colonne est présente dans les données de la table
         if (!entry.getKey().equals(columnName)) {
           throw new IllegalArgumentException(
-            "La colonne " + columnName + " n'existe pas dans la tbl"
-          );
+              "La colonne " + columnName + " n'existe pas dans la tbl");
         }
 
         // Ajouter la colonne et sa valeur à la ligne
@@ -106,16 +104,14 @@ public class DatabaseService {
   public void add(String tableName, String columnName, String data) {
     if (database.get(tableName) == null) {
       throw new IllegalArgumentException(
-        "La table " + tableName + " n'existe pas dans la base de donnees"
-      );
+          "La table " + tableName + " n'existe pas dans la base de donnees");
     }
 
     Map<String, List<String>> table = database.get(tableName);
 
     if (table.get(columnName) == null) {
       throw new IllegalArgumentException(
-        "La colonne " + columnName + " n'existe pas dans la tbl"
-      );
+          "La colonne " + columnName + " n'existe pas dans la tbl");
     }
 
     List<String> column = table.get(columnName);
@@ -126,8 +122,7 @@ public class DatabaseService {
   public void createTable(String tableName, List<String> columns) {
     if (database.get(tableName) != null) {
       throw new IllegalArgumentException(
-        "La table " + tableName + " existe deja dans la base de donnees"
-      );
+          "La table " + tableName + " existe deja dans la base de donnees");
     }
 
     Map<String, List<String>> table = new HashMap<>();
@@ -139,7 +134,8 @@ public class DatabaseService {
     database.put(tableName, table);
   }
 
-  //------------------------Partie serveur youness => etablissement de la logique de communication entre serveurs
+  // ------------------------Partie serveur youness => etablissement de la logique
+  // de communication entre serveurs
 
   public List<String> getColumnContent(String tableName, String columnName) {
     if (database.containsKey(tableName)) {
@@ -150,26 +146,24 @@ public class DatabaseService {
   }
 
   public List<String> getColumnContentOrFetchRemotely(
-    String tableName,
-    String columnName
-  ) {
+      String tableName,
+      String columnName) {
     List<String> localValue = getColumnContent(tableName, columnName);
     if (!localValue.isEmpty()) {
       return localValue;
     } else {
       System.out.println("Valeur non trouver dans le serveur 1");
       String[] serverUrls = {
-        "http://localhost:8081",
-        "http://localhost:8082",
+          "http://localhost:8081",
+          "http://localhost:8082",
       };
       for (String serverUrl : serverUrls) {
         try {
-          String url =
-            serverUrl +
-            "/api/data?tableName=" +
-            tableName +
-            "&columnName=" +
-            columnName;
+          String url = serverUrl +
+              "/api/data?tableName=" +
+              tableName +
+              "&columnName=" +
+              columnName;
           List<String> remoteValue = restTemplate.getForObject(url, List.class);
           if (remoteValue != null && !remoteValue.isEmpty()) {
             System.out.println("Communication avec " + serverUrl);
@@ -183,23 +177,21 @@ public class DatabaseService {
     return Collections.emptyList(); // Return empty if not found anywhere
   }
 
-  //----------------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------------
 
-  //----------travaux DIAKITE 11/03-------------//
+  // ----------travaux DIAKITE 11/03-------------//
 
-  //ajout de méthode pour select toutes les lignes avec un nom donné
+  // ajout de méthode pour select toutes les lignes avec un nom donné
   public List<String> select_elem(
-    String table,
-    String columnName,
-    String nomelem
-  ) {
+      String table,
+      String columnName,
+      String nomelem) {
     List<String> results = new ArrayList<String>();
 
     // Vérifier si la table existe dans la base de données
     if (!database.containsKey(table)) {
       throw new IllegalArgumentException(
-        "Table non trouvée dans la base de données"
-      );
+          "Table non trouvée dans la base de données");
     }
 
     // Récupérer les données de la table
@@ -208,27 +200,26 @@ public class DatabaseService {
     // Vérifier si la colonne existe dans les données de la table
     if (!tableData.containsKey(columnName)) {
       throw new IllegalArgumentException(
-        "La colonne " + columnName + " n'existe pas dans la table"
-      );
+          "La colonne " + columnName + " n'existe pas dans la table");
     }
 
-    //récupérer la colonne
+    // récupérer la colonne
     List<String> col = tableData.get(columnName);
 
     for (String elt : col) {
-      if (elt.equals(nomelem)) results.add(elt);
+      if (elt.equals(nomelem))
+        results.add(elt);
     }
 
     return results;
   }
 
-  //ajout de méthode pour supprimer une liste de colonnes passé en argument
+  // ajout de méthode pour supprimer une liste de colonnes passé en argument
   public void deleteColumn(String table, List<String> columnNames) {
     // Vérifier si la table existe dans la base de données
     if (!database.containsKey(table)) {
       throw new IllegalArgumentException(
-        "Table non trouvée dans la base de données"
-      );
+          "Table non trouvée dans la base de données");
     }
 
     // Récupérer les données de la table
@@ -239,8 +230,7 @@ public class DatabaseService {
         // Vérifier si la colonne est présente dans les données de la table
         if (!entry.getKey().equals(columnName)) {
           throw new IllegalArgumentException(
-            "La colonne " + columnName + " n'existe pas dans la tbl"
-          );
+              "La colonne " + columnName + " n'existe pas dans la tbl");
         }
 
         // Supprimer la colonne de la table
@@ -249,70 +239,64 @@ public class DatabaseService {
     }
   }
 
-  //mettre à jour une colonne donné
+  // mettre à jour une colonne donné
   public void updateColumn(
-    String tableName,
-    String columnName,
-    List<String> newData
-  ) {
+      String tableName,
+      String columnName,
+      List<String> newData) {
     // Vérifier si la table existe dans la base de données
     if (!database.containsKey(tableName)) {
       throw new IllegalArgumentException(
-        "La table " + tableName + " n'existe pas dans la base de données"
-      );
+          "La table " + tableName + " n'existe pas dans la base de données");
     }
 
     // Vérifier si la colonne existe dans la table
     Map<String, List<String>> table = database.get(tableName);
     if (!table.containsKey(columnName)) {
       throw new IllegalArgumentException(
-        "La colonne " + columnName + " n'existe pas dans la table " + tableName
-      );
+          "La colonne " + columnName + " n'existe pas dans la table " + tableName);
     }
 
     // Mettre à jour les données de la colonne
     table.put(columnName, newData);
   }
 
-  //supprimer une cellule selon le nom
+  // supprimer une cellule selon le nom
   public void deleteRows(String tableName, String columnName, String value) {
     // Vérifier si la table existe dans la base de données
     if (!database.containsKey(tableName)) {
       throw new IllegalArgumentException(
-        "La table " + tableName + " n'existe pas dans la base de données"
-      );
+          "La table " + tableName + " n'existe pas dans la base de données");
     }
 
     // Vérifier si la colonne existe dans la table
     Map<String, List<String>> table = database.get(tableName);
     if (!table.containsKey(columnName)) {
       throw new IllegalArgumentException(
-        "La colonne " + columnName + " n'existe pas dans la table " + tableName
-      );
+          "La colonne " + columnName + " n'existe pas dans la table " + tableName);
     }
 
-    // Supprimer les lignes où la valeur de la colonne correspond à la valeur spécifiée
+    // Supprimer les lignes où la valeur de la colonne correspond à la valeur
+    // spécifiée
     List<String> columnData = table.get(columnName);
-    /*for(String cel : columnData){
-            if(cel.equals(value))columnData.remove(cel);
-        }*/
-    columnData.removeIf(cel -> cel.equals(value)); //equivalent au code commenté ci-desssus
+    /*
+     * for(String cel : columnData){
+     * if(cel.equals(value))columnData.remove(cel);
+     * }
+     */
+    columnData.removeIf(cel -> cel.equals(value)); // equivalent au code commenté ci-desssus
   }
 
-  //fusionner 2 tables
+  // fusionner 2 tables
   public void mergeTables(
-    String newTableName,
-    String firstTableName,
-    String secondTableName
-  ) {
+      String newTableName,
+      String firstTableName,
+      String secondTableName) {
     // Vérifier si les tables existent dans la base de données
-    if (
-      !database.containsKey(firstTableName) ||
-      !database.containsKey(secondTableName)
-    ) {
+    if (!database.containsKey(firstTableName) ||
+        !database.containsKey(secondTableName)) {
       throw new IllegalArgumentException(
-        "Les tables spécifiées n'existent pas dans la base de données"
-      );
+          "Les tables spécifiées n'existent pas dans la base de données");
     }
 
     // Fusionner les données des deux tables
@@ -328,11 +312,11 @@ public class DatabaseService {
     // Fusionner les colonnes de la deuxième table
     for (Map.Entry<String, List<String>> entry : secondTable.entrySet()) {
       if (newTable.containsKey(entry.getKey())) {
-        // S'il y a une collision de noms de colonne, renommer la colonne de la deuxième table
+        // S'il y a une collision de noms de colonne, renommer la colonne de la deuxième
+        // table
         newTable.put(
-          secondTableName + "_" + entry.getKey(),
-          new ArrayList<>(entry.getValue())
-        );
+            secondTableName + "_" + entry.getKey(),
+            new ArrayList<>(entry.getValue()));
       } else {
         newTable.put(entry.getKey(), new ArrayList<>(entry.getValue()));
       }
@@ -341,28 +325,25 @@ public class DatabaseService {
     // Ajouter la nouvelle table fusionnée à la base de données
     if (database.containsKey(newTableName)) {
       throw new IllegalArgumentException(
-        "Une table avec le même nom existe déjà"
-      );
+          "Une table avec le même nom existe déjà");
     } else {
       database.put(newTableName, newTable);
     }
   }
 
-  //trier selon les valeurs d'une colonne spécifique
+  // trier selon les valeurs d'une colonne spécifique
   public void sortTablebycolumn(String tableName, String columnName) {
     // Vérifier si la table existe dans la base de données
     if (!database.containsKey(tableName)) {
       throw new IllegalArgumentException(
-        "La table " + tableName + " n'existe pas dans la base de données"
-      );
+          "La table " + tableName + " n'existe pas dans la base de données");
     }
 
     // Vérifier si la colonne existe dans la table
     Map<String, List<String>> table = database.get(tableName);
     if (!table.containsKey(columnName)) {
       throw new IllegalArgumentException(
-        "La colonne " + columnName + " n'existe pas dans la table " + tableName
-      );
+          "La colonne " + columnName + " n'existe pas dans la table " + tableName);
     }
 
     // Récupérer les données de la colonne à trier
@@ -372,22 +353,18 @@ public class DatabaseService {
     columnData.sort(null);
   }
 
-  //joindre 2 tables
+  // joindre 2 tables
   public List<Map<String, List<String>>> joinTables(
-    String firstTableName,
-    String secondTableName,
-    String commonColumn
-  ) {
+      String firstTableName,
+      String secondTableName,
+      String commonColumn) {
     List<Map<String, List<String>>> results = new ArrayList<>();
 
     // Vérifier si les tables existent dans la base de données
-    if (
-      !database.containsKey(firstTableName) ||
-      !database.containsKey(secondTableName)
-    ) {
+    if (!database.containsKey(firstTableName) ||
+        !database.containsKey(secondTableName)) {
       throw new IllegalArgumentException(
-        "Les tables spécifiées n'existent pas dans la base de données"
-      );
+          "Les tables spécifiées n'existent pas dans la base de données");
     }
 
     // Récupérer les données des tables
@@ -395,13 +372,10 @@ public class DatabaseService {
     Map<String, List<String>> secondTable = database.get(secondTableName);
 
     // Vérifier si la colonne commune existe dans les deux tables
-    if (
-      !firstTable.containsKey(commonColumn) ||
-      !secondTable.containsKey(commonColumn)
-    ) {
+    if (!firstTable.containsKey(commonColumn) ||
+        !secondTable.containsKey(commonColumn)) {
       throw new IllegalArgumentException(
-        "La colonne commune spécifiée n'existe pas dans les deux tables"
-      );
+          "La colonne commune spécifiée n'existe pas dans les deux tables");
     }
 
     // Joindre les tables en fonction de la colonne commune
@@ -426,13 +400,12 @@ public class DatabaseService {
     return results;
   }
 
-  //compter le nombre de lignes
+  // compter le nombre de lignes
   public int countRows(String tableName) {
     // Vérifier si la table existe dans la base de données
     if (!database.containsKey(tableName)) {
       throw new IllegalArgumentException(
-        "La table " + tableName + " n'existe pas dans la base de données"
-      );
+          "La table " + tableName + " n'existe pas dans la base de données");
     }
 
     // Compter le nombre de lignes dans la table
@@ -444,13 +417,12 @@ public class DatabaseService {
     return rowCount;
   }
 
-  //----------travaux DIAKITE 11/03-------------//
+  // ----------travaux DIAKITE 11/03-------------//
 
-  //----------travaux DIAKITE 24/03------------//
+  // ----------travaux DIAKITE 24/03------------//
   public List<Map<String, List<String>>> select_colums(
-    String table,
-    String... cols
-  ) {
+      String table,
+      String... cols) {
     List<Map<String, List<String>>> results = new ArrayList<>();
 
     // Vérifier si la table existe dans la base de données
@@ -461,7 +433,7 @@ public class DatabaseService {
     // Récupérer les données de la table
     Map<String, List<String>> tableData = database.get(table);
 
-    //recupérer les colonnes de la table
+    // recupérer les colonnes de la table
     Set<String> colonnes = tableData.keySet();
 
     for (String colonne : cols) {
@@ -488,31 +460,29 @@ public class DatabaseService {
   // ----------travaux DIAKITE 27/03------------//
 
   public List<Map<String, List<String>>> selectWhere(
-    String table,
-    String columnName,
-    String value
-  ) {
+      String table,
+      String columnName,
+      String value) {
     // Récupérer les données de la table
     Map<String, List<String>> tableData = database.get(table);
     // Vérifier si la table existe dans la base de données
     if (tableData == null) {
       throw new IllegalArgumentException(
-        "Table non trouvée dans la base de données"
-      );
+          "Table non trouvée dans la base de données");
     }
 
     // Vérifier si la colonne existe dans les données de la table
     if (!tableData.containsKey(columnName)) {
       throw new IllegalArgumentException(
-        "La colonne " + columnName + " n'existe pas dans la table"
-      );
+          "La colonne " + columnName + " n'existe pas dans la table");
     }
 
     List<Map<String, List<String>>> results = new ArrayList<>();
 
     // Filtrer les données en fonction de la condition
     List<String> columnData = tableData.get(columnName);
-    Map<String, List<String>> filteredResult = new LinkedHashMap<>(); // Utilisation de LinkedHashMap pour préserver l'ordre des colonnes
+    Map<String, List<String>> filteredResult = new LinkedHashMap<>(); // Utilisation de LinkedHashMap pour préserver
+                                                                      // l'ordre des colonnes
     List<Integer> indices = new ArrayList<>();
 
     for (int i = 0; i < columnData.size(); i++) {
@@ -547,15 +517,13 @@ public class DatabaseService {
     // Vérifier si la table existe dans la base de données
     if (tableData == null) {
       throw new IllegalArgumentException(
-        "Table non trouvée dans la base de données"
-      );
+          "Table non trouvée dans la base de données");
     }
 
     // Vérifier si la colonne existe dans les données de la table
     if (!tableData.containsKey(columnName)) {
       throw new IllegalArgumentException(
-        "La colonne " + columnName + " n'existe pas dans la table"
-      );
+          "La colonne " + columnName + " n'existe pas dans la table");
     }
 
     // Récupérer les valeurs de la colonne spécifiée
@@ -580,26 +548,4 @@ public class DatabaseService {
     return somme;
   }
   // ----------travaux DIAKITE 27/03------------//
-
-  // TODO : URGENT (read a .parquet file and parse it to json)
-  // public void test() throws IllegalArgumentException, IOException {
-  // List<SimpleGroup> simpleGroups = new ArrayList<>();
-  // ParquetFileReader reader = ParquetFileReader
-  // .open(HadoopInputFile.fromPath(new Path("yellow_tripdata_2012-01.parquet"),
-  // new Configuration()));
-  // MessageType schema = reader.getFooter().getFileMetaData().getSchema();
-  // List<Type> fields = schema.getFields();
-  // PageReadStore pages;
-  // while ((pages = reader.readNextRowGroup()) != null) {
-  // long rows = pages.getRowCount();
-  // MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
-  // RecordReader recordReader = columnIO.getRecordReader(pages, new
-  // GroupRecordConverter(schema));
-
-  // for (int i = 0; i < rows; i++) {
-  // SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
-  // simpleGroups.add(simpleGroup);
-  // }
-  // }
-  // }
 }
