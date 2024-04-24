@@ -189,7 +189,7 @@ public class ParquetManager {
           }
         }
 
-        // String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+        // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
 
         // for (String serverUrl : serverUrls) {
         // try {
@@ -197,8 +197,8 @@ public class ParquetManager {
 
         // // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
         // Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET,
-        // null, new ParameterizedTypeReference<Map<String, List<Object>>>()
-        // {}).getBody();
+        // null, new ParameterizedTypeReference<Map<String, List<Object>>>() {
+        // }).getBody();
         // result.forEach((key, val) -> value.get(key).addAll(val));
 
         // } catch (Exception e) {
@@ -206,19 +206,12 @@ public class ParquetManager {
         // }
         // }
 
-        // System.out.println(DatabaseService.getDatabase());
+        System.out.println(DatabaseService.getDatabase());
       }
       reader.close();
     } catch (IOException e) {
       e.printStackTrace();
     }
-  }
-
-  private String createTableNameFromFilePath(String filePath) {
-    String[] splittedPath = filePath.split("\\\\");
-    String relativePath = splittedPath[splittedPath.length - 1];
-
-    return relativePath.split("\\.")[0];
   }
 
   public String uploadFile(InputStream fileStream) throws IOException {
