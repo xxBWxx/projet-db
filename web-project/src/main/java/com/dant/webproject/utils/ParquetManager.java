@@ -74,6 +74,8 @@ public class ParquetManager {
 
   // TODO riu
   private List<String> getValues(SimpleGroup group) {
+
+  private List<String> getValues(SimpleGroup group) {
     List<String> res = new ArrayList<>();
 
     int fieldCount = group.getType().getFieldCount();
@@ -93,6 +95,8 @@ public class ParquetManager {
 
   // TODO riu
   private String getValueForField(SimpleGroup group, String fieldName) {
+
+  private String getValueForField(SimpleGroup group, String fieldName) {
     String res = "-";
 
     int fieldCount = group.getType().getFieldCount();
@@ -110,6 +114,8 @@ public class ParquetManager {
 
   // TODO riu
   private List<String> getFieldNames(SimpleGroup group) {
+
+  private List<String> getFieldNames(SimpleGroup group) {
     int fieldCount = group.getType().getFieldCount();
 
     List<String> res = new ArrayList<>();
@@ -124,6 +130,8 @@ public class ParquetManager {
   }
 
   // TODO riu
+  public void readParquetFile(String filePath) {
+
   public void readParquetFile(String filePath) {
     List<SimpleGroup> simpleGroups = new ArrayList<>();
 
@@ -213,6 +221,8 @@ public class ParquetManager {
       e.printStackTrace();
     }
   }
+
+  private String createTableNameFromFilePath(String filePath) {
 
   private String createTableNameFromFilePath(String filePath) {
     String[] splittedPath = filePath.split("\\\\");
