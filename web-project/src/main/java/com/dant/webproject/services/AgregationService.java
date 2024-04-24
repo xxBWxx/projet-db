@@ -3,9 +3,11 @@ package com.dant.webproject.services;
 import com.dant.webproject.dbcomponents.AgregationType;
 import com.dant.webproject.dbcomponents.Column;
 import com.dant.webproject.dbcomponents.Type;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,83 +18,115 @@ public class AgregationService {
     private final DatabaseManagementService databaseManagementService;
 
     @Autowired
-    public AgregationService(DatabaseManagementService databaseManagementService) {
-        this.databaseManagementService = databaseManagementService;
+    public AgregationService(DatabaseManagementService databaseManagementService){
+        this.databaseManagementService=databaseManagementService;
     }
 
-    public Object agregation(AgregationType type, String nametable, String namecolumn) {
-
+    //Rajouter le group by en creant un dico
+    public Object agregation(AgregationType type,String nametable, String namecolumn, String groupByCol) {
         Map<String, Column> table = databaseManagementService.getDatabase().get(nametable);
         Column column = table.get(namecolumn);
+        Column groupBy = table.get(groupByCol);
         switch (type) {
             case SUM:
-                return sum(column);
+                return sum(column, groupBy);
             case COUNT:
-                return count(column);
+                return count(column, groupBy);
             case MAX:
-                return max(column);
+                return max(column, groupBy);
             case MIN:
-                return min(column);
+                return min(column, groupBy);
             default:
                 throw new IllegalArgumentException("Le type d'aggregation est invalide");
         }
     }
 
-    public int sum(Column c) {
-        if (c.getType() == Type.STRING) {
+
+    public Map<Object, Integer> sum(Column c, Column groupBy){
+
+        if(c.getType() == Type.STRING){
             throw new IllegalArgumentException("Le type de la colonne n'est pas INTEGER");
         }
+
         List<Object> values = c.getValues();
-        int total = 0;
-        for (Object value : values) {
-            total += (Integer) value;
+        List<Object> valuesGroupBy = groupBy.getValues();
+        Map<Object, Integer> res = new HashMap<>();
+
+        for(int i=0; i<values.size() ; i++) {
+            if(!(res.containsKey(valuesGroupBy.get(i)))){
+               res.put(valuesGroupBy.get(i), 0);
+            }
+            res.put(valuesGroupBy.get(i), (Integer) (values.get(i))+res.get(valuesGroupBy.get(i)));
         }
-        return total;
+        return res;
     }
 
-    public Object max(Column c) {
+    public Map<Object, Object> max(Column c, Column groupBy) {
+
         List<Object> values = c.getValues();
-        if (values.isEmpty()) {
-            return null; // Retourne null si la liste est vide
-        }
+        List<Object> valuesGroupBy = groupBy.getValues();
+        Map<Object, Object> res = new HashMap<>();
 
-        Object max = values.get(0);
-        for (Object value : values) {
-            if (max.getClass() != value.getClass() || !(value instanceof Comparable)) {
-                throw new IllegalArgumentException("All elements must be of the same type and comparable");
-            }
-            Comparable comparableValue = (Comparable) value;
-            if (comparableValue.compareTo(max) > 0) {
-                max = value;
+        for (int i = 0; i < values.size(); i++) {
+            Object groupByKey = valuesGroupBy.get(i);
+            Object currentValue = values.get(i);
+
+            if (!res.containsKey(groupByKey)) {
+                // Si la clé n'existe pas, initialisez avec la valeur actuelle
+                res.put(groupByKey, currentValue);
+            } else {
+                // Si la clé existe, comparez et gardez le maximum
+                Comparable currentMax = (Comparable) res.get(groupByKey);
+                if (currentMax.compareTo(currentValue) < 0) {
+                    res.put(groupByKey, currentValue);
+                }
             }
         }
-
-        return max;
+        return res;
     }
 
-    public Object min(Column c) {
+    public Map<Object, Object> min(Column c, Column groupBy) {
+
+
         List<Object> values = c.getValues();
-        if (values.isEmpty()) {
-            return null; // Retourne null si la liste est vide
-        }
+        List<Object> valuesGroupBy = groupBy.getValues();
+        Map<Object, Object> res = new HashMap<>();
 
-        Object min = values.get(0);
-        for (Object value : values) {
-            if (min.getClass() != value.getClass() || !(value instanceof Comparable)) {
-                throw new IllegalArgumentException("All elements must be of the same type and comparable");
-            }
-            Comparable comparableValue = (Comparable) value;
-            if (comparableValue.compareTo(min) < 0) {
-                min = value;
+        for (int i = 0; i < values.size(); i++) {
+            Object groupByKey = valuesGroupBy.get(i);
+            Object currentValue = values.get(i);
+
+            if (!res.containsKey(groupByKey)) {
+                // Si la clé n'existe pas, initialisez avec la valeur actuelle
+                res.put(groupByKey, currentValue);
+            } else {
+                // Si la clé existe, comparez et gardez le minimum
+                Comparable currentMin = (Comparable) res.get(groupByKey);
+                if (currentMin.compareTo(currentValue) > 0) {
+                    res.put(groupByKey, currentValue);
+                }
             }
         }
-
-        return min;
+        return res;
     }
 
-    public int count(Column c) {
+
+
+    public Map<Object, Integer> count(Column c, Column groupBy) {
         List<Object> values = c.getValues();
-        return values.size(); // Retourne le nombre d'éléments dans la liste
+        List<Object> valuesGroupBy = groupBy.getValues();
+
+        Map<Object, Integer> res = new HashMap<>();
+
+        for(int i=0; i<values.size() ; i++) {
+            if(!(res.containsKey(valuesGroupBy.get(i)))){
+                res.put(valuesGroupBy.get(i), 0);
+            }
+            res.put(valuesGroupBy.get(i), (Integer) (1 + res.get(valuesGroupBy.get(i))));
+        }
+        return res;
     }
+
+
 
 }

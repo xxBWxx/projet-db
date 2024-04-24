@@ -19,8 +19,8 @@ public class AgregationController {
     private AgregationService agregationService;
 
     @GetMapping("/selectFrom")
-    public Object createTableCol(@RequestParam String tableName, @RequestParam String agregationType, @RequestParam String colName) {
-        return agregationService.agregation(AgregationType.valueOf(agregationType), tableName, colName);
+    public Object selectFrom(@RequestParam String tableName, @RequestParam String agregationType, @RequestParam String colName, @RequestParam String groupByValues) {
+        return agregationService.agregation(AgregationType.valueOf(agregationType), tableName, colName, groupByValues);
     }
 }
 
