@@ -17,7 +17,6 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestController
 @RequestMapping("/load")
 public class LoadController {
-public class LoadController {
     @Autowired
     private LoadService loadService;
 
