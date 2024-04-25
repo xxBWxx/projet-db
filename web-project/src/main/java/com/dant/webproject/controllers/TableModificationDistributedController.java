@@ -20,11 +20,11 @@ public class TableModificationDistributedController {
     private static final Logger LOGGER = LoggerFactory.getLogger(TableModificationDistributedController.class);
 
     @PostMapping("/insert")
-    public ResponseEntity<String> insert(@RequestParam String table, @RequestBody Map<String, Object> requestData) {
+    public ResponseEntity<String> insert(@RequestParam String tableName, @RequestBody Map<String, Object> requestData) {
         List<String> col_name = (List<String>) (requestData.get("col_name"));
         List<List<String>> value = (List<List<String>>) (requestData.get("value"));
         LOGGER.info("Receiving request to insert values");
-        distributedService.insertDistributed(table, col_name, value);
+        distributedService.insertDistributed(tableName, col_name, value);
         return ResponseEntity.ok("Insertion realise !");
     }
 

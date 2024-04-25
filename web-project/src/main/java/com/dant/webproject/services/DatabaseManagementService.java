@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.dant.webproject.dbcomponents.Column;
-import com.dant.webproject.dbcomponents.Type;
+import com.dant.webproject.dbcomponents.DataType;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,7 +14,7 @@ public class DatabaseManagementService implements IDatabaseManagementService {
 
   private Map<String, Map<String, Column>> database = new HashMap<>();
 
-  public void createTableCol(String tableName, List<String> columns, List<Type> type) {
+  public void createTableCol(String tableName, List<String> columns, List<DataType> type) {
     if (database.get(tableName) != null) {
       throw new IllegalArgumentException(
           "La table " + tableName + " existe deja dans la base de donnees");

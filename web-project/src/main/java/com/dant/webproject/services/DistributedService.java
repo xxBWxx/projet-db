@@ -1,6 +1,6 @@
 package com.dant.webproject.services;
 
-import com.dant.webproject.dbcomponents.Type;
+import com.dant.webproject.dbcomponents.DataType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 @Component
 public class DistributedService {
 
-
     @Autowired
     private final SelectService selectService;
     @Autowired
@@ -30,19 +29,19 @@ public class DistributedService {
     private RestTemplate restTemplate;
 
     @Autowired
-    public DistributedService(SelectService selectService, DatabaseManagementService databaseManagementService, TableModificationService tableModificationService){
-        this.selectService=selectService;
-        this.databaseManagementService=databaseManagementService;
-        this.tableModificationService=tableModificationService;
+    public DistributedService(SelectService selectService, DatabaseManagementService databaseManagementService,
+            TableModificationService tableModificationService) {
+        this.selectService = selectService;
+        this.databaseManagementService = databaseManagementService;
+        this.tableModificationService = tableModificationService;
     }
 
+    public void createTableColDistributed(String tableName, List<String> columns, List<DataType> types) {
+        // List<DataType> typeList =
+        // types.stream().map(DataType::valueOf).collect(Collectors.toList());
 
-    public void createTableColDistributed(String tableName, List<String> columns, List<String> type){
-
-        List<Type> typeList = type.stream().map(Type::valueOf).collect(Collectors.toList());
-
-        databaseManagementService.createTableCol(tableName, columns, typeList);
-        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"};
+        databaseManagementService.createTableCol(tableName, columns, types);
+        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
 
         // Headers pour la requête HTTP
         HttpHeaders headers = new HttpHeaders();
@@ -52,57 +51,58 @@ public class DistributedService {
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("col_name", columns);
-        requestBody.put("type", type);
+        requestBody.put("type", types);
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
         // Appel du point de terminaison sur chaque serveur
         for (String serverUrl : serverUrls) {
-            String createTableUrl = serverUrl + "/databasemanagement/createTableCol?tableName=" + tableName;
+            String createTableUrl = serverUrl + "/databaseManagement/createTableCol?tableName=" + tableName;
             restTemplate.exchange(createTableUrl, HttpMethod.POST, requestEntity, Void.class);
         }
     }
 
-    public void createTableDistributed(String tableName){
+    public void createTableDistributed(String tableName) {
         databaseManagementService.createTable(tableName);
-        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"};
-
+        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
 
         // Appel du point de terminaison sur chaque serveur
         for (String serverUrl : serverUrls) {
-            String createTableUrl = serverUrl + "/databasemanagement/createTable?tableName=" + tableName;
+            String createTableUrl = serverUrl + "/databaseManagement/createTable?tableName=" + tableName;
             restTemplate.exchange(createTableUrl, HttpMethod.POST, null, Void.class);
         }
     }
 
+    public void insertDistributed(String tableName, List<String> columns, List<List<String>> valuesList) {
+        int cpt = 0;
+        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
 
-    public void insertDistributed(String table, List<String> col_name, List<List<String>> value){
-        int cpt=0;
-        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"};
-
-        if(value.size()==1){
-            tableModificationService.insert(table, col_name, value.get(1));
+        if (valuesList.size() == 1) {
+            tableModificationService.insert(tableName, columns, valuesList.get(0));
             return;
         }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        for (List<String> item : value) {
-            if(cpt==0){
-                tableModificationService.insert(table, col_name, item);
+        for (List<String> value : valuesList) {
+            if (cpt == 0) {
+                tableModificationService.insert(tableName, columns, value);
                 cpt++;
+
                 continue;
             }
+
             // Construire le corps de la requête
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("col_name", col_name);
-            requestBody.put("value", item);
+            requestBody.put("col_name", columns);
+            requestBody.put("value", value);
 
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
             // Construire l'URL pour le point de terminaison d'insertion
-            String insertUrl = serverUrls[cpt-1] + "/tablemodification/insert?table=" + table;
-            cpt=(cpt+1)%3;
+            String insertUrl = serverUrls[cpt - 1] + "/tableModification/insert?tableName=" + tableName;
+            cpt = (cpt + 1) % 3;
+
             // Effectuer la requête HTTP POST
             restTemplate.exchange(insertUrl, HttpMethod.POST, requestEntity, Void.class);
         }
@@ -118,15 +118,16 @@ public class DistributedService {
             value.get(key).addAll(val);
         });
 
-
-        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
 
         for (String serverUrl : serverUrls) {
             try {
                 String url = serverUrl + "/select/selectallfrom?tableName=" + tableName;
 
                 // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
-                Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
+                Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET, null,
+                        new ParameterizedTypeReference<Map<String, List<Object>>>() {
+                        }).getBody();
                 result.forEach((key, val) -> value.get(key).addAll(val));
 
             } catch (Exception e) {
@@ -137,8 +138,8 @@ public class DistributedService {
         return value; // Return empty if not found anywhere
     }
 
-    public Map<String, List<Object>> select_colsDistributed(String tableName, List<String> col_names){
-        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+    public Map<String, List<Object>> select_colsDistributed(String tableName, List<String> col_names) {
+        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
 
         Map<String, List<Object>> value = new HashMap<>();
         selectService.select_cols(tableName, col_names).forEach((key, val) -> {
@@ -147,7 +148,6 @@ public class DistributedService {
             }
             value.get(key).addAll(val);
         });
-
 
         for (String serverUrl : serverUrls) {
             try {
@@ -159,7 +159,9 @@ public class DistributedService {
                 HttpEntity<List<String>> requestEntity = new HttpEntity<>(col_names, headers);
 
                 // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
-                Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.POST, requestEntity, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
+                Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.POST, requestEntity,
+                        new ParameterizedTypeReference<Map<String, List<Object>>>() {
+                        }).getBody();
                 result.forEach((key, val) -> value.get(key).addAll(val));
 
             } catch (Exception e) {
@@ -170,102 +172,116 @@ public class DistributedService {
         return value; // Return empty if not found anywhere
     }
 
-   /* public Map<String, List<Object>> selectWhere_eqDistributed(String tableName, String colName, String val) {
+    /*
+     * public Map<String, List<Object>> selectWhere_eqDistributed(String tableName,
+     * String colName, String val) {
+     * 
+     * Map<String, List<Object>> value = new HashMap<>();
+     * selectService.selectWhere_eq(tableName, colName, val).forEach((key, v) -> {
+     * if (!value.containsKey(key)) {
+     * value.put(key, new ArrayList<>());
+     * }
+     * value.get(key).addAll(v);
+     * });
+     * 
+     * 
+     * String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+     * 
+     * for (String serverUrl : serverUrls) {
+     * try {
+     * String url = serverUrl + "/select/select_where_eq_from?tableName=" +
+     * tableName +"&colName="+colName+"&val="+val;
+     * 
+     * // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
+     * Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET,
+     * null, new ParameterizedTypeReference<Map<String, List<Object>>>()
+     * {}).getBody();
+     * result.forEach((key, v) -> value.get(key).addAll(v));
+     * 
+     * } catch (Exception e) {
+     * e.printStackTrace(); // Handle exception or log it
+     * }
+     * }
+     * 
+     * return value; // Return empty if not found anywhere
+     * }
+     * 
+     * public Map<String, List<Object>> selectWhere_supDistributed(@RequestParam
+     * String tableName, @RequestParam String colName,@RequestParam String val) {
+     * Map<String, List<Object>> value = new HashMap<>();
+     * selectService.selectWhere_sup(tableName, colName, val).forEach((key, v) -> {
+     * if (!value.containsKey(key)) {
+     * value.put(key, new ArrayList<>());
+     * }
+     * value.get(key).addAll(v);
+     * });
+     * 
+     * 
+     * String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+     * 
+     * for (String serverUrl : serverUrls) {
+     * try {
+     * String url = serverUrl + "/select/select_where_sup_from?tableName=" +
+     * tableName +"&colName="+colName+"&val="+val;
+     * 
+     * // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
+     * Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET,
+     * null, new ParameterizedTypeReference<Map<String, List<Object>>>()
+     * {}).getBody();
+     * result.forEach((key, v) -> value.get(key).addAll(v));
+     * 
+     * } catch (Exception e) {
+     * e.printStackTrace(); // Handle exception or log it
+     * }
+     * }
+     * 
+     * return value; // Return empty if not found anywhere
+     * }
+     * 
+     * public Map<String, List<Object>> selectWhere_infDistributed(@RequestParam
+     * String tableName, @RequestParam String colName,@RequestParam String val) {
+     * Map<String, List<Object>> value = new HashMap<>();
+     * selectService.selectWhere_inf(tableName, colName, val).forEach((key, v) -> {
+     * if (!value.containsKey(key)) {
+     * value.put(key, new ArrayList<>());
+     * }
+     * value.get(key).addAll(v);
+     * });
+     * 
+     * 
+     * String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+     * 
+     * for (String serverUrl : serverUrls) {
+     * try {
+     * String url = serverUrl + "/select/select_where_inf_from?tableName=" +
+     * tableName +"&colName="+colName+"&val="+val;
+     * 
+     * // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
+     * Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET,
+     * null, new ParameterizedTypeReference<Map<String, List<Object>>>()
+     * {}).getBody();
+     * result.forEach((key, v) -> value.get(key).addAll(v));
+     * 
+     * } catch (Exception e) {
+     * e.printStackTrace(); // Handle exception or log it
+     * }
+     * }
+     * 
+     * return value; // Return empty if not found anywhere
+     * }
+     */
 
-        Map<String, List<Object>> value = new HashMap<>();
-        selectService.selectWhere_eq(tableName, colName, val).forEach((key, v) -> {
-            if (!value.containsKey(key)) {
-                value.put(key, new ArrayList<>());
-            }
-            value.get(key).addAll(v);
-        });
-
-
-        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
-
-        for (String serverUrl : serverUrls) {
-            try {
-                String url = serverUrl + "/select/select_where_eq_from?tableName=" + tableName +"&colName="+colName+"&val="+val;
-
-                // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
-                Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
-                result.forEach((key, v) -> value.get(key).addAll(v));
-
-            } catch (Exception e) {
-                e.printStackTrace(); // Handle exception or log it
-            }
-        }
-
-        return value; // Return empty if not found anywhere
-    }
-
-    public Map<String, List<Object>> selectWhere_supDistributed(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
-        Map<String, List<Object>> value = new HashMap<>();
-        selectService.selectWhere_sup(tableName, colName, val).forEach((key, v) -> {
-            if (!value.containsKey(key)) {
-                value.put(key, new ArrayList<>());
-            }
-            value.get(key).addAll(v);
-        });
-
-
-        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
-
-        for (String serverUrl : serverUrls) {
-            try {
-                String url = serverUrl + "/select/select_where_sup_from?tableName=" + tableName +"&colName="+colName+"&val="+val;
-
-                // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
-                Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
-                result.forEach((key, v) -> value.get(key).addAll(v));
-
-            } catch (Exception e) {
-                e.printStackTrace(); // Handle exception or log it
-            }
-        }
-
-        return value; // Return empty if not found anywhere
-    }
-
-   public Map<String, List<Object>> selectWhere_infDistributed(@RequestParam String tableName, @RequestParam String colName,@RequestParam String val) {
-        Map<String, List<Object>> value = new HashMap<>();
-        selectService.selectWhere_inf(tableName, colName, val).forEach((key, v) -> {
-            if (!value.containsKey(key)) {
-                value.put(key, new ArrayList<>());
-            }
-            value.get(key).addAll(v);
-        });
-
-
-        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
-
-        for (String serverUrl : serverUrls) {
-            try {
-                String url = serverUrl + "/select/select_where_inf_from?tableName=" + tableName +"&colName="+colName+"&val="+val;
-
-                // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
-                Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
-                result.forEach((key, v) -> value.get(key).addAll(v));
-
-            } catch (Exception e) {
-                e.printStackTrace(); // Handle exception or log it
-            }
-        }
-
-        return value; // Return empty if not found anywhere
-    }*/
-
-    public void updateColumnDistributed(String tableName, String columnName, String newData, String conditionColumn, Object conditionValue){
-        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+    public void updateColumnDistributed(String tableName, String columnName, String newData, String conditionColumn,
+            Object conditionValue) {
+        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
         tableModificationService.updateColumn(tableName, columnName, newData, conditionColumn, conditionValue);
         for (String serverUrl : serverUrls) {
             try {
-                String url = serverUrl + "/tablemodification/update_col?tableName=" + tableName
-                        +"&columnName="+columnName
-                        +"&newData="+newData
-                        +"&conditionColumn="+conditionColumn
-                        +"&conditionValue="+conditionValue;
-
+                String url = serverUrl + "/tableModification/update_col?tableName=" + tableName
+                        + "&columnName=" + columnName
+                        + "&newData=" + newData
+                        + "&conditionColumn=" + conditionColumn
+                        + "&conditionValue=" + conditionValue;
 
                 restTemplate.exchange(url, HttpMethod.POST, null, Void.class);
 
@@ -274,6 +290,5 @@ public class DistributedService {
             }
         }
     }
-
 
 }

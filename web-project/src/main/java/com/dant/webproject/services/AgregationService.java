@@ -2,7 +2,7 @@ package com.dant.webproject.services;
 
 import com.dant.webproject.dbcomponents.AgregationType;
 import com.dant.webproject.dbcomponents.Column;
-import com.dant.webproject.dbcomponents.Type;
+import com.dant.webproject.dbcomponents.DataType;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,12 +18,12 @@ public class AgregationService {
     private final DatabaseManagementService databaseManagementService;
 
     @Autowired
-    public AgregationService(DatabaseManagementService databaseManagementService){
-        this.databaseManagementService=databaseManagementService;
+    public AgregationService(DatabaseManagementService databaseManagementService) {
+        this.databaseManagementService = databaseManagementService;
     }
 
-    //Rajouter le group by en creant un dico
-    public Object agregation(AgregationType type,String nametable, String namecolumn, String groupByCol) {
+    // Rajouter le group by en creant un dico
+    public Object agregation(AgregationType type, String nametable, String namecolumn, String groupByCol) {
         Map<String, Column> table = databaseManagementService.getDatabase().get(nametable);
         Column column = table.get(namecolumn);
         Column groupBy = table.get(groupByCol);
@@ -41,10 +41,9 @@ public class AgregationService {
         }
     }
 
+    public Map<Object, Integer> sum(Column c, Column groupBy) {
 
-    public Map<Object, Integer> sum(Column c, Column groupBy){
-
-        if(c.getType() == Type.STRING){
+        if (c.getType() == DataType.STRING) {
             throw new IllegalArgumentException("Le type de la colonne n'est pas INTEGER");
         }
 
@@ -52,11 +51,11 @@ public class AgregationService {
         List<Object> valuesGroupBy = groupBy.getValues();
         Map<Object, Integer> res = new HashMap<>();
 
-        for(int i=0; i<values.size() ; i++) {
-            if(!(res.containsKey(valuesGroupBy.get(i)))){
-               res.put(valuesGroupBy.get(i), 0);
+        for (int i = 0; i < values.size(); i++) {
+            if (!(res.containsKey(valuesGroupBy.get(i)))) {
+                res.put(valuesGroupBy.get(i), 0);
             }
-            res.put(valuesGroupBy.get(i), (Integer) (values.get(i))+res.get(valuesGroupBy.get(i)));
+            res.put(valuesGroupBy.get(i), (Integer) (values.get(i)) + res.get(valuesGroupBy.get(i)));
         }
         return res;
     }
@@ -87,7 +86,6 @@ public class AgregationService {
 
     public Map<Object, Object> min(Column c, Column groupBy) {
 
-
         List<Object> values = c.getValues();
         List<Object> valuesGroupBy = groupBy.getValues();
         Map<Object, Object> res = new HashMap<>();
@@ -110,23 +108,19 @@ public class AgregationService {
         return res;
     }
 
-
-
     public Map<Object, Integer> count(Column c, Column groupBy) {
         List<Object> values = c.getValues();
         List<Object> valuesGroupBy = groupBy.getValues();
 
         Map<Object, Integer> res = new HashMap<>();
 
-        for(int i=0; i<values.size() ; i++) {
-            if(!(res.containsKey(valuesGroupBy.get(i)))){
+        for (int i = 0; i < values.size(); i++) {
+            if (!(res.containsKey(valuesGroupBy.get(i)))) {
                 res.put(valuesGroupBy.get(i), 0);
             }
             res.put(valuesGroupBy.get(i), (Integer) (1 + res.get(valuesGroupBy.get(i))));
         }
         return res;
     }
-
-
 
 }

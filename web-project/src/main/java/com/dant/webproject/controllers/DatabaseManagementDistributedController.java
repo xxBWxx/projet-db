@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.dant.webproject.dbcomponents.Type;
+import com.dant.webproject.dbcomponents.DataType;
 import com.dant.webproject.services.DatabaseManagementService;
 import com.dant.webproject.services.DistributedService;
 import com.dant.webproject.services.SelectService;
@@ -36,7 +36,7 @@ public class DatabaseManagementDistributedController {
             @RequestBody Map<String, Object> requestData) {
         LOGGER.info("Receiving request for the creation of table " + tableName);
         List<String> col_name = (List<String>) (requestData.get("col_name"));
-        List<String> type_name = (List<String>) (requestData.get("type"));
+        List<DataType> type_name = (List<DataType>) (requestData.get("type"));
         distributedService.createTableColDistributed(tableName, col_name, type_name);
         return ResponseEntity.ok("The table " + tableName + " was created successfully");
     }

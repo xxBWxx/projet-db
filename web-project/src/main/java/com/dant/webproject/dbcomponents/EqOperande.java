@@ -3,14 +3,14 @@ package com.dant.webproject.dbcomponents;
 import java.util.List;
 import java.util.Map;
 
-public class EqOperande extends Operande{
+public class EqOperande extends Operande {
     public EqOperande(String left, String right) {
         super(left, right);
     }
 
     @Override
     public boolean eval(Map<String, Column> tableData) {
-        Type columnType = tableData.get(left).getType();
+        DataType columnType = tableData.get(left).getType();
         Object realValue = right;
 
         List<Object> columnData = tableData.get(left).getValues();
@@ -23,4 +23,3 @@ public class EqOperande extends Operande{
         return !indices.isEmpty();
     }
 }
-

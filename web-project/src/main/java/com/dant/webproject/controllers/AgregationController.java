@@ -1,7 +1,7 @@
 package com.dant.webproject.controllers;
 
 import com.dant.webproject.dbcomponents.AgregationType;
-import com.dant.webproject.dbcomponents.Type;
+import com.dant.webproject.dbcomponents.DataType;
 import com.dant.webproject.services.AgregationService;
 import com.dant.webproject.services.SelectService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +19,8 @@ public class AgregationController {
     private AgregationService agregationService;
 
     @GetMapping("/selectFrom")
-    public Object selectFrom(@RequestParam String tableName, @RequestParam String agregationType, @RequestParam String colName, @RequestParam String groupByValues) {
+    public Object selectFrom(@RequestParam String tableName, @RequestParam String agregationType,
+            @RequestParam String colName, @RequestParam String groupByValues) {
         return agregationService.agregation(AgregationType.valueOf(agregationType), tableName, colName, groupByValues);
     }
 }
-

@@ -1,8 +1,10 @@
 package com.dant.webproject.utils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,30 +26,45 @@ import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.jackson.JacksonProperties.Datatype;
+import org.springframework.web.client.RestTemplate;
 
-import com.dant.webproject.controllers.DatabaseManagementController;
-import com.dant.webproject.dbcomponents.Column;
+import com.dant.webproject.dbcomponents.DataType;
 import com.dant.webproject.services.DatabaseManagementService;
-import com.dant.webproject.services.DatabaseService;
+import com.dant.webproject.services.DistributedService;
+import com.dant.webproject.services.TableModificationService;
 
 public class ParquetManager {
   @Autowired
   private final DatabaseManagementService databaseManagementService;
 
   @Autowired
-  private ParquetManager(DatabaseManagementService databaseManagementService) {
+  private final DistributedService distributedService;
+
+  @Autowired
+  private final TableModificationService tableModificationService;
+
+  @Autowired
+  RestTemplate restTemplate;
+
+  @Autowired
+  private ParquetManager(DatabaseManagementService databaseManagementService, DistributedService distributedService,
+      TableModificationService tableModificationService) {
     this.databaseManagementService = databaseManagementService;
+    this.distributedService = distributedService;
+    this.tableModificationService = tableModificationService;
   }
 
   private static final Logger logger = LoggerFactory.getLogger(Main.class.getName());
 
   private static ParquetManager parquetManager = null;
 
-  public static synchronized ParquetManager getParquetManager(DatabaseManagementService databaseManagementService) {
+  public static synchronized ParquetManager getParquetManager(DatabaseManagementService databaseManagementService,
+      DistributedService distributedService,
+      TableModificationService tableModificationService) {
     if (parquetManager == null) {
-      parquetManager = new ParquetManager(databaseManagementService);
+      parquetManager = new ParquetManager(databaseManagementService, distributedService, tableModificationService);
     }
 
     return parquetManager;
@@ -72,35 +89,19 @@ public class ParquetManager {
     return res;
   }
 
-  // TODO riu
-  private List<String> getValues(SimpleGroup group) {
-    List<String> res = new ArrayList<>();
-
-    int fieldCount = group.getType().getFieldCount();
-
-    for (int field = 0; field < fieldCount; field++) {
-      int valueCount = group.getFieldRepetitionCount(field);
-
-      if (valueCount == 0) {
-        res.add("-");
-      } else {
-        res.add(group.getValueToString(field, 0));
-      }
-    }
-
-    return res;
-  }
-
-  // TODO riu
   private String getValueForField(SimpleGroup group, String fieldName) {
     String res = "-";
 
     int fieldCount = group.getType().getFieldCount();
 
     for (int fieldIndex = 0; fieldIndex < fieldCount; fieldIndex++) {
-      if (fieldName == group.getType().getFieldName(fieldIndex)) {
-        res = group.getValueToString(fieldIndex, 0);
+      try {
+        if (fieldName == group.getType().getFieldName(fieldIndex)) {
+          res = group.getValueToString(fieldIndex, 0);
 
+          break;
+        }
+      } catch (Exception e) {
         break;
       }
     }
@@ -108,7 +109,6 @@ public class ParquetManager {
     return res;
   }
 
-  // TODO riu
   private List<String> getFieldNames(SimpleGroup group) {
     int fieldCount = group.getType().getFieldCount();
 
@@ -123,50 +123,21 @@ public class ParquetManager {
     return res;
   }
 
-  // TODO riu
-  public void readParquetFile(String filePath) {
-    List<SimpleGroup> simpleGroups = new ArrayList<>();
-
-    try {
-      ParquetFileReader reader = ParquetFileReader.open(
-          HadoopInputFile.fromPath(new Path(filePath), new Configuration()));
-      MessageType schema = reader.getFooter().getFileMetaData().getSchema();
-      List<Type> fields = schema.getFields();
-      PageReadStore pages;
-      while ((pages = reader.readNextRowGroup()) != null) {
-        long rows = pages.getRowCount();
-        MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
-        RecordReader recordReader = columnIO.getRecordReader(
-            pages,
-            new GroupRecordConverter(schema));
-        for (int i = 0; i < 2; i++) {
-          SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
-          simpleGroup.getFieldRepetitionCount(0);
-          simpleGroups.add(simpleGroup);
-        }
-      }
-      reader.close();
-    } catch (IOException e) {
-      System.out.println(e.getMessage());
-    }
-  }
-
   public void parseParquetFile(String filePath, String tableName) {
     try {
       ParquetFileReader reader = ParquetFileReader.open(
           HadoopInputFile.fromPath(new Path(filePath), new Configuration()));
       MessageType schema = reader.getFooter().getFileMetaData().getSchema();
-      List<Type> fields = schema.getFields();
 
-      // TODO: change variable name for more comprehension
-      Map<String, List<String>> fieldMap = new HashMap<String, List<String>>();
+      distributedService.createTableDistributed(tableName);
 
-      for (Type field : fields) {
-        fieldMap.put(field.toString().split("\\s")[2], new ArrayList<>());
-      }
+      String[] serverUrls = { "http://localhost:8080", "http://localhost:8081", "http://localhost:8082" };
+      int serverIndex;
 
-      // DatabaseService.getDatabase().put(tableName, fieldMap);
-      databaseManagementService.createTable(tableName);
+      List<DataType> types = new ArrayList<>();
+      List<String> columns = new ArrayList<>();
+      List<String> values;
+      List<List<String>> valuesList = new ArrayList<>();
 
       PageReadStore pages;
       while ((pages = reader.readNextRowGroup()) != null) {
@@ -177,39 +148,37 @@ public class ParquetManager {
             pages,
             new GroupRecordConverter(schema));
 
-        // TODO: replace 1 with rows
-        for (int i = 0; i < 1; i++) {
+        // TODO: replace random number with rows
+        for (int i = 0; i < 6; i++) {
           SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
 
-          for (String fieldName : fieldMap.keySet()) {
-            String value = getFieldValueMap(simpleGroup).get(fieldName);
-            String valueToAdd = value == null ? "-" : value;
+          if (i == 0) {
+            types = getTypesOfGroup(simpleGroup);
+            columns = getFieldNames(simpleGroup);
 
-            fieldMap.get(fieldName).add(valueToAdd);
+            System.out.println(columns);
+
+            distributedService.createTableColDistributed(tableName, columns, types);
           }
+
+          values = new ArrayList<>();
+          for (int j = 0; j < columns.size(); j++) {
+            values.add(getValueForField(simpleGroup, columns.get(j)));
+
+          }
+
+          System.out.println(values);
+          System.out.println(types);
+          System.out.println("-----------------------------------------------------");
+          valuesList.add(values);
         }
 
-        // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-
-        // for (String serverUrl : serverUrls) {
-        // try {
-        // String url = serverUrl + "/select/selectallfrom?tableName=" + tableName;
-
-        // // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
-        // Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET,
-        // null, new ParameterizedTypeReference<Map<String, List<Object>>>() {
-        // }).getBody();
-        // result.forEach((key, val) -> value.get(key).addAll(val));
-
-        // } catch (Exception e) {
-        // e.printStackTrace(); // Handle exception or log it
-        // }
-        // }
-
-        System.out.println(DatabaseService.getDatabase());
+        distributedService.insertDistributed(tableName, columns, valuesList);
       }
       reader.close();
-    } catch (IOException e) {
+    } catch (
+
+    IOException e) {
       e.printStackTrace();
     }
   }
@@ -217,12 +186,58 @@ public class ParquetManager {
   public String uploadFile(InputStream fileStream) throws IOException {
     Files.copy(fileStream, new File("tempFile.parquet").toPath());
 
-    // logger.info("Uploaded to database.");
+    // logger.info("...");
 
     return "tempFile.parquet";
   }
 
   public void deleteFile(String filePath) throws IOException {
     Files.delete(new File(filePath).toPath());
+  }
+
+  private List<DataType> getTypesOfGroup(SimpleGroup simpleGroup) {
+    List<DataType> res = new ArrayList<>();
+
+    String groupStr = simpleGroup.getType().toString().replace("ı", "i");
+
+    System.out.println(groupStr);
+
+    try (BufferedReader reader = new BufferedReader(new StringReader(groupStr))) {
+      String previousLine = null;
+      boolean firstLineSkipped = false;
+
+      String line;
+      while ((line = reader.readLine()) != null) {
+        if (!firstLineSkipped) {
+          firstLineSkipped = true;
+
+          continue;
+        }
+
+        if (previousLine != null) {
+          if (previousLine.contains("TIMESTAMP_MICROS")) {
+            res.add(DataType.DATETIME_STRING);
+          }
+
+          else if (previousLine.contains(" int32 ") || previousLine.contains(" int64 ")) {
+            res.add(DataType.INTEGER);
+          }
+
+          else if (previousLine.contains(" double ")) {
+            res.add(DataType.DOUBLE);
+          }
+
+          else {
+            res.add(DataType.STRING);
+          }
+        }
+
+        previousLine = line;
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return res;
   }
 }

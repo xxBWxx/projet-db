@@ -16,18 +16,16 @@ public class TableModificationController {
 
     @PostMapping("/insertMult")
     public void insertMult(@RequestParam String table, @RequestBody Map<String, Object> requestData) {
-
         List<String> col_name = (List<String>) (requestData.get("col_name"));
         List<List<String>> value = (List<List<String>>) (requestData.get("value"));
         tableModificationService.insertMult(table, col_name, value);
     }
 
     @PostMapping("/insert")
-    public void insert(@RequestParam String table, @RequestBody Map<String, List<String>> requestData) {
-
+    public void insert(@RequestParam String tableName, @RequestBody Map<String, List<String>> requestData) {
         List<String> col_name = requestData.get("col_name");
         List<String> value = requestData.get("value");
-        tableModificationService.insert(table, col_name, value);
+        tableModificationService.insert(tableName, col_name, value);
     }
 
     @PostMapping("/updateCol")
@@ -35,5 +33,4 @@ public class TableModificationController {
             @RequestParam String newData, @RequestParam String conditionColumn, @RequestParam Object conditionValue) {
         tableModificationService.updateColumn(tableName, columnName, newData, conditionColumn, conditionValue);
     }
-
 }

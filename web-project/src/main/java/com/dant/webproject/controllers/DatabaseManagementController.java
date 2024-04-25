@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.dant.webproject.dbcomponents.Type;
+import com.dant.webproject.dbcomponents.DataType;
 import com.dant.webproject.services.DatabaseManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +19,7 @@ public class DatabaseManagementController {
     public void createTableCol(@RequestParam String tableName, @RequestBody Map<String, Object> requestData) {
         List<String> col_name = (List<String>) (requestData.get("col_name"));
         List<String> type_name = (List<String>) (requestData.get("type"));
-        List<Type> typeList = type_name.stream().map(Type::valueOf).collect(Collectors.toList());
+        List<DataType> typeList = type_name.stream().map(DataType::valueOf).collect(Collectors.toList());
         databaseManagementService.createTableCol(tableName, col_name, typeList);
     }
 

@@ -2,7 +2,7 @@ package com.dant.webproject.services;
 
 import com.dant.webproject.dbcomponents.Column;
 import com.dant.webproject.dbcomponents.Operande;
-import com.dant.webproject.dbcomponents.Type;
+import com.dant.webproject.dbcomponents.DataType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -94,7 +94,4 @@ public class SelectService implements ISelectService {
 
         return filteredResult;
     }
-
-    // pour Baran
-
 }
