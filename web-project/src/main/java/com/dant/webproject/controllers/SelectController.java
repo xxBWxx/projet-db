@@ -60,7 +60,6 @@ public class SelectController {
 
         for (List<String> l : op) {
             if (l.get(1).equals("=")) {
-                System.out.println("l de 2" + l.get(2));
                 EqOperande newop = new EqOperande(l.get(0), l.get(2));
                 listop.add(newop);
             }

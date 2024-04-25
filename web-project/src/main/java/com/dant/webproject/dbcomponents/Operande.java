@@ -46,6 +46,8 @@ public abstract class Operande {
             else {
                 return 1;
             }
+        } else if (columnType == DataType.DATETIME_STRING) {
+            return value1.toString().compareTo(value2.toString());
         } else {
             return ((String) value1).compareTo((String) value2);
         }

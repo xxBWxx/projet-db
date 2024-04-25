@@ -28,6 +28,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jackson.JacksonProperties.Datatype;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.dant.webproject.dbcomponents.DataType;
@@ -35,6 +40,7 @@ import com.dant.webproject.services.DatabaseManagementService;
 import com.dant.webproject.services.DistributedService;
 import com.dant.webproject.services.TableModificationService;
 
+@Component
 public class ParquetManager {
   @Autowired
   private final DatabaseManagementService databaseManagementService;
@@ -46,7 +52,7 @@ public class ParquetManager {
   private final TableModificationService tableModificationService;
 
   @Autowired
-  RestTemplate restTemplate;
+  private RestTemplate restTemplate;
 
   @Autowired
   private ParquetManager(DatabaseManagementService databaseManagementService, DistributedService distributedService,
@@ -137,7 +143,10 @@ public class ParquetManager {
       List<DataType> types = new ArrayList<>();
       List<String> columns = new ArrayList<>();
       List<String> values;
-      List<List<String>> valuesList = new ArrayList<>();
+      // List<List<String>> valuesList = new ArrayList<>();
+
+      HttpHeaders headers = new HttpHeaders();
+      headers.setContentType(MediaType.APPLICATION_JSON);
 
       PageReadStore pages;
       while ((pages = reader.readNextRowGroup()) != null) {
@@ -149,14 +158,12 @@ public class ParquetManager {
             new GroupRecordConverter(schema));
 
         // TODO: replace random number with rows
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 100; i++) {
           SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
 
           if (i == 0) {
             types = getTypesOfGroup(simpleGroup);
             columns = getFieldNames(simpleGroup);
-
-            System.out.println(columns);
 
             distributedService.createTableColDistributed(tableName, columns, types);
           }
@@ -164,16 +171,35 @@ public class ParquetManager {
           values = new ArrayList<>();
           for (int j = 0; j < columns.size(); j++) {
             values.add(getValueForField(simpleGroup, columns.get(j)));
-
           }
 
-          System.out.println(values);
-          System.out.println(types);
-          System.out.println("-----------------------------------------------------");
-          valuesList.add(values);
+          serverIndex = i % 3;
+          distributedService.insertRowDistributed(tableName, columns, values, serverIndex);
+
+          // if (serverIndex == 0) {
+          // tableModificationService.insert(tableName, columns, values);
+          // }
+
+          // else {
+          // String url = serverUrls[serverIndex] + "/tableModification/insert?tableName="
+          // + tableName;
+
+          // // Construire le corps de la requête
+          // Map<String, Object> requestBody = new HashMap<>();
+          // requestBody.put("col_name", columns);
+          // requestBody.put("value", values);
+
+          // HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody,
+          // headers);
+
+          // // Effectuer la requête HTTP POST
+          // restTemplate.exchange(url, HttpMethod.POST, requestEntity, Void.class);
+          // }
+
+          // valuesList.add(values);
         }
 
-        distributedService.insertDistributed(tableName, columns, valuesList);
+        // distributedService.insertDistributed(tableName, columns, valuesList);
       }
       reader.close();
     } catch (
@@ -199,8 +225,6 @@ public class ParquetManager {
     List<DataType> res = new ArrayList<>();
 
     String groupStr = simpleGroup.getType().toString().replace("ı", "i");
-
-    System.out.println(groupStr);
 
     try (BufferedReader reader = new BufferedReader(new StringReader(groupStr))) {
       String previousLine = null;
