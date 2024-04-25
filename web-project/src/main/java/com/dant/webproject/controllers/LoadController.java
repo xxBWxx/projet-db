@@ -10,8 +10,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dant.webproject.services.LoadService;
-import com.dant.webproject.utils.ParquetManager;
-import com.dant.webproject.utils.ParquetManager;
 
 import jakarta.servlet.http.HttpServletRequest;
 

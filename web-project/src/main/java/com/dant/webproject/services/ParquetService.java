@@ -1,4 +1,4 @@
-package com.dant.webproject.utils;
+package com.dant.webproject.services;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -7,13 +7,10 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.chainsaw.Main;
 import org.apache.parquet.column.page.PageReadStore;
 import org.apache.parquet.example.data.simple.SimpleGroup;
 import org.apache.parquet.example.data.simple.convert.GroupRecordConverter;
@@ -24,76 +21,25 @@ import org.apache.parquet.io.MessageColumnIO;
 import org.apache.parquet.io.RecordReader;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.jackson.JacksonProperties.Datatype;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import com.dant.webproject.dbcomponents.DataType;
-import com.dant.webproject.services.DatabaseManagementService;
-import com.dant.webproject.services.DistributedService;
-import com.dant.webproject.services.TableModificationService;
 
 @Component
-public class ParquetManager {
-  @Autowired
-  private final DatabaseManagementService databaseManagementService;
-
+public class ParquetService {
   @Autowired
   private final DistributedService distributedService;
 
   @Autowired
-  private final TableModificationService tableModificationService;
-
-  @Autowired
-  private RestTemplate restTemplate;
-
-  @Autowired
-  private ParquetManager(DatabaseManagementService databaseManagementService, DistributedService distributedService,
-      TableModificationService tableModificationService) {
-    this.databaseManagementService = databaseManagementService;
+  private ParquetService(DistributedService distributedService) {
     this.distributedService = distributedService;
-    this.tableModificationService = tableModificationService;
   }
 
-  private static final Logger logger = LoggerFactory.getLogger(Main.class.getName());
-
-  private static ParquetManager parquetManager = null;
-
-  public static synchronized ParquetManager getParquetManager(DatabaseManagementService databaseManagementService,
-      DistributedService distributedService,
-      TableModificationService tableModificationService) {
-    if (parquetManager == null) {
-      parquetManager = new ParquetManager(databaseManagementService, distributedService, tableModificationService);
-    }
-
-    return parquetManager;
-  }
-
-  private Map<String, String> getFieldValueMap(SimpleGroup group) {
-    Map<String, String> res = new HashMap<>();
-
-    int fieldCount = group.getType().getFieldCount();
-
-    for (int fieldIndex = 0; fieldIndex < fieldCount; fieldIndex++) {
-      int valueCount = group.getFieldRepetitionCount(fieldIndex);
-
-      Type fieldType = group.getType().getType(fieldIndex);
-      String fieldName = fieldType.getName();
-
-      for (int i = 0; i < valueCount; i++) {
-        res.put(fieldName, group.getValueToString(fieldIndex, i));
-      }
-    }
-
-    return res;
-  }
+  // private static final Logger logger =
+  // LoggerFactory.getLogger(Main.class.getName());
 
   private String getValueForField(SimpleGroup group, String fieldName) {
     String res = "-";
@@ -137,7 +83,6 @@ public class ParquetManager {
 
       distributedService.createTableDistributed(tableName);
 
-      String[] serverUrls = { "http://localhost:8080", "http://localhost:8081", "http://localhost:8082" };
       int serverIndex;
 
       List<DataType> types = new ArrayList<>();

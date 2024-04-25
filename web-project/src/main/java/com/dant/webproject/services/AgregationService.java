@@ -1,15 +1,15 @@
 package com.dant.webproject.services;
 
-import com.dant.webproject.dbcomponents.AgregationType;
-import com.dant.webproject.dbcomponents.Column;
-import com.dant.webproject.dbcomponents.DataType;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.dant.webproject.dbcomponents.AgregationType;
+import com.dant.webproject.dbcomponents.Column;
+import com.dant.webproject.dbcomponents.DataType;
 
 @Component
 public class AgregationService {
