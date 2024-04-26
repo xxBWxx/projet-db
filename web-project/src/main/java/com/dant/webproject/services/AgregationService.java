@@ -41,25 +41,29 @@ public class AgregationService {
         }
     }
 
-    public Map<Object, Integer> sum(Column column, Column groupBy) {
-
+    public Map<Object, Number> sum(Column column, Column groupBy) {
         if (column.getType() == DataType.STRING || column.getType() == DataType.DATETIME_STRING) {
             throw new IllegalArgumentException("Le type de la colonne n'est pas INTEGER ou DOUBLE");
         }
 
         List<Object> values = column.getValues();
         List<Object> valuesGroupBy = groupBy.getValues();
-        Map<Object, Integer> res = new HashMap<>();
+        Map<Object, Number> res = new HashMap<>();
 
         for (int i = 0; i < values.size(); i++) {
-            if (!(res.containsKey(valuesGroupBy.get(i)))) {
-                res.put(valuesGroupBy.get(i), 0);
+            Object groupByValue = valuesGroupBy.get(i);
+            if (!res.containsKey(groupByValue)) {
+                res.put(groupByValue, 0);
             }
 
+            Number currentValue = res.get(groupByValue);
             if (column.getType() == DataType.INTEGER) {
-                res.put(valuesGroupBy.get(i), Integer.parseInt(values.get(i).toString()) + res.get(valuesGroupBy.get(i)));
+                res.put(groupByValue, currentValue.intValue() + Integer.parseInt(values.get(i).toString()));
+            } else if (column.getType() == DataType.DOUBLE) {
+                res.put(groupByValue, currentValue.doubleValue() + Double.parseDouble(values.get(i).toString()));
             }
         }
+
         return res;
     }
 
