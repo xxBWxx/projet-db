@@ -1,16 +1,15 @@
 package com.dant.webproject.services;
 
+import com.dant.webproject.dbcomponents.AgregationType;
 import com.dant.webproject.dbcomponents.DataType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,16 +23,19 @@ public class DistributedService {
     private final DatabaseManagementService databaseManagementService;
     @Autowired
     private final TableModificationService tableModificationService;
+    @Autowired
+    private final AgregationService agregationService;
 
     @Autowired
     private RestTemplate restTemplate;
 
     @Autowired
     public DistributedService(SelectService selectService, DatabaseManagementService databaseManagementService,
-            TableModificationService tableModificationService) {
+            TableModificationService tableModificationService, AgregationService agregationService) {
         this.selectService = selectService;
         this.databaseManagementService = databaseManagementService;
         this.tableModificationService = tableModificationService;
+        this.agregationService = agregationService;
     }
 
     public void createTableColDistributed(String tableName, List<String> columns, List<DataType> types) {
@@ -201,7 +203,7 @@ public class DistributedService {
     /*
      * public Map<String, List<Object>> selectWhere_eqDistributed(String tableName,
      * String colName, String val) {
-     * 
+     *
      * Map<String, List<Object>> value = new HashMap<>();
      * selectService.selectWhere_eq(tableName, colName, val).forEach((key, v) -> {
      * if (!value.containsKey(key)) {
@@ -209,29 +211,29 @@ public class DistributedService {
      * }
      * value.get(key).addAll(v);
      * });
-     * 
-     * 
+     *
+     *
      * String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
-     * 
+     *
      * for (String serverUrl : serverUrls) {
      * try {
      * String url = serverUrl + "/select/select_where_eq_from?tableName=" +
      * tableName +"&colName="+colName+"&val="+val;
-     * 
+     *
      * // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
      * Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET,
      * null, new ParameterizedTypeReference<Map<String, List<Object>>>()
      * {}).getBody();
      * result.forEach((key, v) -> value.get(key).addAll(v));
-     * 
+     *
      * } catch (Exception e) {
      * e.printStackTrace(); // Handle exception or log it
      * }
      * }
-     * 
+     *
      * return value; // Return empty if not found anywhere
      * }
-     * 
+     *
      * public Map<String, List<Object>> selectWhere_supDistributed(@RequestParam
      * String tableName, @RequestParam String colName,@RequestParam String val) {
      * Map<String, List<Object>> value = new HashMap<>();
@@ -241,29 +243,29 @@ public class DistributedService {
      * }
      * value.get(key).addAll(v);
      * });
-     * 
-     * 
+     *
+     *
      * String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
-     * 
+     *
      * for (String serverUrl : serverUrls) {
      * try {
      * String url = serverUrl + "/select/select_where_sup_from?tableName=" +
      * tableName +"&colName="+colName+"&val="+val;
-     * 
+     *
      * // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
      * Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET,
      * null, new ParameterizedTypeReference<Map<String, List<Object>>>()
      * {}).getBody();
      * result.forEach((key, v) -> value.get(key).addAll(v));
-     * 
+     *
      * } catch (Exception e) {
      * e.printStackTrace(); // Handle exception or log it
      * }
      * }
-     * 
+     *
      * return value; // Return empty if not found anywhere
      * }
-     * 
+     *
      * public Map<String, List<Object>> selectWhere_infDistributed(@RequestParam
      * String tableName, @RequestParam String colName,@RequestParam String val) {
      * Map<String, List<Object>> value = new HashMap<>();
@@ -273,26 +275,26 @@ public class DistributedService {
      * }
      * value.get(key).addAll(v);
      * });
-     * 
-     * 
+     *
+     *
      * String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
-     * 
+     *
      * for (String serverUrl : serverUrls) {
      * try {
      * String url = serverUrl + "/select/select_where_inf_from?tableName=" +
      * tableName +"&colName="+colName+"&val="+val;
-     * 
+     *
      * // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
      * Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET,
      * null, new ParameterizedTypeReference<Map<String, List<Object>>>()
      * {}).getBody();
      * result.forEach((key, v) -> value.get(key).addAll(v));
-     * 
+     *
      * } catch (Exception e) {
      * e.printStackTrace(); // Handle exception or log it
      * }
      * }
-     * 
+     *
      * return value; // Return empty if not found anywhere
      * }
      */
@@ -316,5 +318,62 @@ public class DistributedService {
             }
         }
     }
+
+    public Object agregationDistributed(AgregationType type, String nametable, String namecolumn, String groupByCol){
+        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+
+        // L'agrégation initiale est faite localement.
+        Map<Object, Object> aggregatedResults = (Map<Object, Object>) agregationService.agregation(type, nametable, namecolumn, groupByCol);
+
+        for (String serverUrl : serverUrls) {
+            try {
+                // Corrigez l'URL pour utiliser correctement les & pour séparer les paramètres
+                String url = serverUrl + "/agregation/selectFrom?type=" + type + "&nametable=" + nametable + "&namecolumn=" + namecolumn + "&groupByCol=" + groupByCol;
+
+                RestTemplate restTemplate = new RestTemplate();
+                ResponseEntity<Map<Object, Object>> response = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<Object, Object>>() {});
+
+                Map<Object, Object> result = response.getBody();
+
+                // Fusion des résultats selon le type d'agrégation
+                if (result != null) {
+                    result.forEach((key, value) -> {
+                        Object existingValue = aggregatedResults.get(key);
+                        if (existingValue == null) {
+                            aggregatedResults.put(key, value);
+                        } else {
+                            switch (type) {
+                                case SUM:
+                                    aggregatedResults.put(key, (Integer) existingValue + (Integer) value);
+                                    break;
+                                case COUNT:
+                                    aggregatedResults.put(key, (Integer) existingValue + (Integer) value);
+                                    break;
+                                case MAX:
+                                    if (((Comparable) existingValue).compareTo(value) < 0) {
+                                        aggregatedResults.put(key, value);
+                                    }
+                                    break;
+                                case MIN:
+                                    if (((Comparable) existingValue).compareTo(value) > 0) {
+                                        aggregatedResults.put(key, value);
+                                    }
+                                    break;
+                            }
+                        }
+                    });
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace(); // Gestion des exceptions
+            }
+        }
+
+        return aggregatedResults;
+    }
+
+//    public Map<String, List<Object>> selectWhereDistributed(String tableName, List<List<String>> op) {
+//
+//    }
 
 }

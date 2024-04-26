@@ -35,25 +35,7 @@ public class SelectController {
         return selectService.select_cols(tableName, col_names);
     }
 
-    /*
-     * @GetMapping("/select_where_eq_from")
-     * public Map<String, List<Object>> selectWhere_eq(@RequestParam String
-     * tableName, @RequestParam String colName,@RequestParam String val) {
-     * return selectService.selectWhere_eq(tableName,colName,val);
-     * }
-     * 
-     * @GetMapping("/select_where_sup_from")
-     * public Map<String, List<Object>> selectWhere_sup(@RequestParam String
-     * tableName, @RequestParam String colName,@RequestParam String val) {
-     * return selectService.selectWhere_sup(tableName,colName,val);
-     * }
-     * 
-     * @GetMapping("/select_where_inf_from")
-     * public Map<String, List<Object>> selectWhere_inf(@RequestParam String
-     * tableName, @RequestParam String colName,@RequestParam String val) {
-     * return selectService.selectWhere_inf(tableName,colName,val);
-     * }
-     */
+
     @PostMapping("/select_where")
     public Map<String, List<Object>> selectWhere(@RequestParam String tableName, @RequestBody List<List<String>> op) {
         List<Operande> listop = new ArrayList<>();

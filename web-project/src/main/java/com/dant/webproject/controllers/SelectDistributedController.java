@@ -1,8 +1,13 @@
 package com.dant.webproject.controllers;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.dant.webproject.dbcomponents.EqOperande;
+import com.dant.webproject.dbcomponents.InfOperande;
+import com.dant.webproject.dbcomponents.Operande;
+import com.dant.webproject.dbcomponents.SupOperande;
 import com.dant.webproject.services.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,4 +58,10 @@ public class SelectDistributedController {
         return distributedService.selectWhere_infDistributed(tableName, colName, val);
     }
     */
+
+//   @PostMapping("/select_where")
+//   public Map<String, List<Object>> selectWhere(@RequestParam String tableName, @RequestBody List<List<String>> op) {
+//       return distributedService.selectWhereDistributed(tableName, listop);
+//   }
+
 }
