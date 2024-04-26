@@ -36,8 +36,9 @@ public class DatabaseManagementDistributedController {
             @RequestBody Map<String, Object> requestData) {
         LOGGER.info("Receiving request for the creation of table " + tableName);
         List<String> col_name = (List<String>) (requestData.get("col_name"));
-        List<DataType> type_name = (List<DataType>) (requestData.get("type"));
-        distributedService.createTableColDistributed(tableName, col_name, type_name);
+        List<String> type_name = (List<String>) (requestData.get("type"));
+        List<DataType> typeList = type_name.stream().map(DataType::valueOf).collect(Collectors.toList());
+        distributedService.createTableColDistributed(tableName, col_name, typeList);
         return ResponseEntity.ok("The table " + tableName + " was created successfully");
     }
 
