@@ -135,6 +135,10 @@ public class DistributedService {
         restTemplate.exchange(insertUrl, HttpMethod.POST, requestEntity, Void.class);
     }
 
+    public void insertmult(String tableName, List<String> col, List<List<String>> value, int modulo) {
+        tableModificationService.insertMult(tableName,col,value);
+    }
+
     public Map<String, List<Object>> selectAllDistributed(String tableName) {
 
         Map<String, List<Object>> value = new HashMap<>();

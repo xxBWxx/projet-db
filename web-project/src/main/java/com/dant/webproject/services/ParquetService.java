@@ -7,7 +7,9 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -22,20 +24,28 @@ import org.apache.parquet.io.RecordReader;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
 import com.dant.webproject.dbcomponents.DataType;
+import org.springframework.web.client.RestTemplate;
 
 @Component
 public class ParquetService {
   @Autowired
   private final DistributedService distributedService;
+  @Autowired
+  private final TableModificationService tableModificationService;
+  @Autowired
+  private RestTemplate restTemplate;
 
   @Autowired
-  private ParquetService(DistributedService distributedService) {
+  private ParquetService(DistributedService distributedService, TableModificationService tableModificationService) {
     this.distributedService = distributedService;
+    this.tableModificationService = tableModificationService;
   }
 
   // private static final Logger logger =
@@ -89,7 +99,104 @@ public class ParquetService {
           HadoopInputFile.fromPath(new Path(filePath), new Configuration()));
       MessageType schema = reader.getFooter().getFileMetaData().getSchema();
 
-      distributedService.createTableDistributed(tableName);
+      int serverIndex;
+
+      List<DataType> types = new ArrayList<>();
+      List<String> columns = new ArrayList<>();
+
+      List<String> values;
+      List<List<String>> file2 = new ArrayList<>();
+      List<List<String>> file3 = new ArrayList<>();
+
+
+      PageReadStore pages;
+
+      MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
+      long end1 = System.currentTimeMillis();
+      System.err.println("Time took " + (end1 - start));
+      long a = 0, b = 0;
+
+      start = System.currentTimeMillis();
+      while ((pages = reader.readNextRowGroup()) != null) {
+
+        a++;
+
+        RecordReader recordReader = columnIO.getRecordReader(
+            pages,
+            new GroupRecordConverter(schema));
+
+        // TODO: replace random number with rows
+        for (int i = 0; i < 2000000; i++) {
+          SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
+          b++;
+          if (i == 0) {
+            types = getTypesOfGroup(simpleGroup);
+            columns = getFieldNames(simpleGroup);
+
+            distributedService.createTableColDistributed(tableName, columns, types);
+          }
+          if(i % 100 == 0) {
+            long endParse = System.currentTimeMillis();
+            System.out.println((endParse - start) + " ms for " + i);
+          }
+
+          values = new ArrayList<>();
+          for (int j = 0; j < columns.size(); j++) {
+            values.add(getValueForField(simpleGroup, columns.get(j), j));
+          }
+          serverIndex = i % 3;
+          if(serverIndex == 0)
+            tableModificationService.insert(tableName, columns, values);
+          if(serverIndex == 1)
+            file2.add(values);
+          if(serverIndex == 2)
+            file3.add(values);
+        }
+
+      }
+
+      //distributedService.insertmult(tableName,columns, file1);
+      String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+
+      HttpHeaders headers = new HttpHeaders();
+      headers.setContentType(MediaType.APPLICATION_JSON);
+
+      Map<String, Object> requestBody = new HashMap<>();
+      requestBody.put("col_name", columns);
+
+      for(int i=0; i<2; i++){
+        if(i==0)
+          requestBody.put("value", file2);
+        if(i==1)
+          requestBody.put("value", file3);
+
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+        // Construire l'URL pour le point de terminaison d'insertion
+        String insertUrl = serverUrls[i] + "/tableModification/insertMult?table=" + tableName;
+
+        // Effectuer la requête HTTP POST
+        restTemplate.exchange(insertUrl, HttpMethod.POST, requestEntity, Void.class);
+        requestBody.remove("value");
+      }
+
+
+
+      System.err.println(a + " " + b);
+      reader.close();
+    } catch (
+
+    IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void parseParquetFile1(String filePath, String tableName) {
+    try {
+      long start = System.currentTimeMillis();
+      ParquetFileReader reader = ParquetFileReader.open(
+              HadoopInputFile.fromPath(new Path(filePath), new Configuration()));
+      MessageType schema = reader.getFooter().getFileMetaData().getSchema();
 
       int serverIndex;
 
@@ -115,8 +222,8 @@ public class ParquetService {
 //        long rows = pages.getRowCount();
 
         RecordReader recordReader = columnIO.getRecordReader(
-            pages,
-            new GroupRecordConverter(schema));
+                pages,
+                new GroupRecordConverter(schema));
 
         // TODO: replace random number with rows
         for (int i = 0; i < 800; i++) {
@@ -140,8 +247,12 @@ public class ParquetService {
 
 
           //System.err.println("Time took for parsing " + (endParse - end1));
+
+
           serverIndex = i % 3;
           distributedService.insertRowDistributed(tableName, columns, values, serverIndex);
+
+
           //System.err.println("Time took for insert " + (endInsert - endParse));
 
           // if (serverIndex == 0) {
@@ -173,7 +284,7 @@ public class ParquetService {
       reader.close();
     } catch (
 
-    IOException e) {
+            IOException e) {
       e.printStackTrace();
     }
   }
@@ -182,7 +293,7 @@ public class ParquetService {
     long st = System.currentTimeMillis();
     Files.copy(fileStream, new File("tempFile.parquet").toPath());
 
-    System.err.println("Copy file took " + (System.currentTimeMillis() - st));
+    System.out.println("Copy file took " + (System.currentTimeMillis() - st));
     // logger.info("...");
 
     return "tempFile.parquet";
