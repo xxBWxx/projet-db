@@ -36,6 +36,8 @@ public class AgregationService {
                 return max(column, groupBy);
             case MIN:
                 return min(column, groupBy);
+            case AVG:
+                return avg(column, groupBy);
             default:
                 throw new IllegalArgumentException("Le type d'aggregation est invalide");
         }
@@ -130,4 +132,31 @@ public class AgregationService {
         return res;
     }
 
+    public Map<Object, Number> avg(Column c, Column groupBy) {
+        if (c.getType() == DataType.STRING || c.getType() == DataType.DATETIME_STRING) {
+            throw new IllegalArgumentException("Le type de la colonne n'est pas INTEGER ou DOUBLE");
+        }
+
+        Map<Object, Integer> count = count(c, groupBy);
+        Map<Object, Number> sum = sum(c, groupBy);
+
+        // Créer une nouvelle map pour les moyennes
+        Map<Object, Number> average = new HashMap<>();
+
+        // Parcourir les entrées de count
+        for (Map.Entry<Object, Integer> entry : count.entrySet()) {
+            Object key = entry.getKey();
+            Integer countValue = entry.getValue();
+            Number sumValue = sum.get(key);
+
+
+            // Calculer la moyenne pour cette clé
+            if (sumValue != null && countValue != null && countValue != 0) {
+                double avgValue = sumValue.doubleValue() / countValue;
+                average.put(key, avgValue);
+            }
+        }
+
+        return average;
+    }
 }

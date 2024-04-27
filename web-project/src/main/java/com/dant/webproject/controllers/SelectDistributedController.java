@@ -59,9 +59,10 @@ public class SelectDistributedController {
     }
     */
 
-//   @PostMapping("/select_where")
-//   public Map<String, List<Object>> selectWhere(@RequestParam String tableName, @RequestBody List<List<String>> op) {
-//       return distributedService.selectWhereDistributed(tableName, listop);
-//   }
+   @PostMapping("/select_where")
+   public Map<String, List<Object>> selectWhere(@RequestParam String tableName, @RequestBody List<List<String>> op) {
+
+       return distributedService.selectWhereDistributed(tableName, op);
+   }
 
 }

@@ -1,7 +1,6 @@
 package com.dant.webproject.services;
 
-import com.dant.webproject.dbcomponents.AgregationType;
-import com.dant.webproject.dbcomponents.DataType;
+import com.dant.webproject.dbcomponents.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -305,7 +304,7 @@ public class DistributedService {
         tableModificationService.updateColumn(tableName, columnName, newData, conditionColumn, conditionValue);
         for (String serverUrl : serverUrls) {
             try {
-                String url = serverUrl + "/tableModification/update_col?tableName=" + tableName
+                String url = serverUrl + "/tableModification/updateCol?tableName=" + tableName
                         + "&columnName=" + columnName
                         + "&newData=" + newData
                         + "&conditionColumn=" + conditionColumn
@@ -372,8 +371,52 @@ public class DistributedService {
         return aggregatedResults;
     }
 
-//    public Map<String, List<Object>> selectWhereDistributed(String tableName, List<List<String>> op) {
-//
-//    }
+    public Map<String, List<Object>> selectWhereDistributed(String tableName, List<List<String>> op) {
+        Map<String, List<Object>> value = new HashMap<>();
+
+        List<Operande> listop = new ArrayList<>();
+
+        for (List<String> l : op) {
+            if (l.get(1).equals("=")) {
+                EqOperande newop = new EqOperande(l.get(0), l.get(2));
+                listop.add(newop);
+            }
+            if (l.get(1).equals(">")) {
+                SupOperande newop = new SupOperande(l.get(0), l.get(2));
+                listop.add(newop);
+            }
+            if (l.get(1).equals("<")) {
+                InfOperande newop = new InfOperande(l.get(0), l.get(2));
+                listop.add(newop);
+            }
+        }
+
+        selectService.select_where(tableName, listop).forEach((key, v) -> {
+            if (!value.containsKey(key)) {
+                value.put(key, new ArrayList<>());
+            }
+            value.get(key).addAll(v);
+        });
+
+        String[] serverUrls = {"http://localhost:8081", "http://localhost:8082"} ;
+        for (String serverUrl : serverUrls) {
+            try {
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_JSON);
+
+                    HttpEntity<List<List<String>>> requestEntity = new HttpEntity<>(op);
+                    String url = serverUrl + "/select/select_where?tableName=" + tableName;
+
+                    // Utilisation de ParameterizedTypeReference pour la désérialisation correcte
+                    Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.POST, requestEntity, new ParameterizedTypeReference<Map<String, List<Object>>>() {}).getBody();
+                    result.forEach((key, v) -> value.get(key).addAll(v));
+
+            } catch (Exception e) {
+                e.printStackTrace(); // Handle exception or log it
+            }
+      }
+
+     return value; // Return empty if not found anywhere
+    }
 
 }

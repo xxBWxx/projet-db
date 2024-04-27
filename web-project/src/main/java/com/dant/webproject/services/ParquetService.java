@@ -41,10 +41,17 @@ public class ParquetService {
   // private static final Logger logger =
   // LoggerFactory.getLogger(Main.class.getName());
 
-  private String getValueForField(SimpleGroup group, String fieldName) {
+  private String getValueForField(SimpleGroup group, String fieldName, int position) {
     String res = "-";
 
-    int fieldCount = group.getType().getFieldCount();
+    try{
+      return group.getValueToString(position, 0);
+    } catch(Exception e) {
+      return res;
+    }
+
+
+    /*int fieldCount = group.getType().getFieldCount();
 
     for (int fieldIndex = 0; fieldIndex < fieldCount; fieldIndex++) {
       try {
@@ -58,7 +65,7 @@ public class ParquetService {
       }
     }
 
-    return res;
+    return res;*/
   }
 
   private List<String> getFieldNames(SimpleGroup group) {
@@ -77,6 +84,7 @@ public class ParquetService {
 
   public void parseParquetFile(String filePath, String tableName) {
     try {
+      long start = System.currentTimeMillis();
       ParquetFileReader reader = ParquetFileReader.open(
           HadoopInputFile.fromPath(new Path(filePath), new Configuration()));
       MessageType schema = reader.getFooter().getFileMetaData().getSchema();
@@ -94,32 +102,47 @@ public class ParquetService {
       headers.setContentType(MediaType.APPLICATION_JSON);
 
       PageReadStore pages;
-      while ((pages = reader.readNextRowGroup()) != null) {
-        long rows = pages.getRowCount();
 
-        MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
+      MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
+      long end1 = System.currentTimeMillis();
+      System.err.println("Time took " + (end1 - start));
+      long a = 0, b = 0;
+
+      start = System.currentTimeMillis();
+      while ((pages = reader.readNextRowGroup()) != null) {
+
+        a++;
+//        long rows = pages.getRowCount();
+
         RecordReader recordReader = columnIO.getRecordReader(
             pages,
             new GroupRecordConverter(schema));
 
         // TODO: replace random number with rows
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 800; i++) {
           SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
-
+          b++;
           if (i == 0) {
             types = getTypesOfGroup(simpleGroup);
             columns = getFieldNames(simpleGroup);
 
             distributedService.createTableColDistributed(tableName, columns, types);
           }
+          if(i % 100 == 0) {
+            long endParse = System.currentTimeMillis();
+            System.out.println((endParse - start) + " ms for " + i);
+          }
 
           values = new ArrayList<>();
           for (int j = 0; j < columns.size(); j++) {
-            values.add(getValueForField(simpleGroup, columns.get(j)));
+            values.add(getValueForField(simpleGroup, columns.get(j), j));
           }
 
+
+          //System.err.println("Time took for parsing " + (endParse - end1));
           serverIndex = i % 3;
           distributedService.insertRowDistributed(tableName, columns, values, serverIndex);
+          //System.err.println("Time took for insert " + (endInsert - endParse));
 
           // if (serverIndex == 0) {
           // tableModificationService.insert(tableName, columns, values);
@@ -146,6 +169,7 @@ public class ParquetService {
 
         // distributedService.insertDistributed(tableName, columns, valuesList);
       }
+      System.err.println(a + " " + b);
       reader.close();
     } catch (
 
@@ -155,8 +179,10 @@ public class ParquetService {
   }
 
   public String uploadFile(InputStream fileStream) throws IOException {
+    long st = System.currentTimeMillis();
     Files.copy(fileStream, new File("tempFile.parquet").toPath());
 
+    System.err.println("Copy file took " + (System.currentTimeMillis() - st));
     // logger.info("...");
 
     return "tempFile.parquet";
