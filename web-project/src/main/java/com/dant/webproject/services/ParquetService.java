@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -94,6 +96,7 @@ public class ParquetService {
 
 
   public void parseParquetFile(String filePath, String tableName) {
+    ExecutorService executor = Executors.newFixedThreadPool(10);  // Créer un pool de 2 threads
     try {
       long start = System.currentTimeMillis();
       ParquetFileReader reader = ParquetFileReader.open(
@@ -119,7 +122,7 @@ public class ParquetService {
 
       start = System.currentTimeMillis();
 
-      int batchSize = 100;
+      int batchSize = 200000;
 
       while ((pages = reader.readNextRowGroup()) != null) {
 
@@ -130,7 +133,7 @@ public class ParquetService {
             new GroupRecordConverter(schema));
 
         // TODO: replace random number with rows
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 3000000; i++) {
           SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
           b++;
           if (i == 0) {
@@ -149,30 +152,49 @@ public class ParquetService {
             values.add(getValueForField(simpleGroup, columns.get(j), j));
           }
           serverIndex = i % 3;
-          if(serverIndex == 0)
+          if(serverIndex == 0){
             tableModificationService.insert(tableName, columns, values);
-
+            continue;
+          }
           if(serverIndex == 1){
             file2.add(values);
             if(file2.size()>=batchSize){
-              sendBatch(file2, 0, tableName, columns);
-              file2.clear();
+              List<List<String>> tmp = file3;
+              final List<String> finalColumns = columns;
+              executor.submit(() -> sendBatch(tmp, 0, tableName, finalColumns));
+              //sendBatch(tmp, 0, tableName, columns);
+              file2=new ArrayList<>();
+              //file2.clear();
             }
+            continue;
           }
+
           if(serverIndex == 2){
             file3.add(values);
             if(file3.size()>=batchSize){
-              sendBatch(file3, 1, tableName, columns);
-              file3.clear();
+              List<List<String>> tmp = file3;
+              final List<String> finalColumns = columns;
+              executor.submit(() -> sendBatch(tmp, 1, tableName, finalColumns));
+              //sendBatch(tmp, 1, tableName, columns);
+              //file3.clear();
+              file3=new ArrayList<>();
             }
           }
         }
       }
 
-      if(!file2.isEmpty())
-        sendBatch(file2, 0, tableName, columns);
-      if(!file3.isEmpty())
-        sendBatch(file3, 1, tableName, columns);
+      if(!file2.isEmpty()){
+        //sendBatch(file2, 0, tableName, columns);
+        final List<List<String>> finalFile = file2;
+        final List<String> finalColumns = columns;
+        executor.submit(() -> sendBatch(finalFile, 0, tableName, finalColumns));
+      }
+      if(!file3.isEmpty()){
+        final List<List<String>> finalFile = file3;
+        final List<String> finalColumns = columns;
+        executor.submit(() -> sendBatch(finalFile, 1, tableName, finalColumns));
+        //sendBatch(file3, 1, tableName, columns);
+      }
 
 
       System.err.println(a + " " + b);
@@ -201,6 +223,7 @@ public class ParquetService {
     String insertUrl = serverUrls[serverIndex] + "/tableModification/insertMult?table=" + tableName;
     // Effectuer la requête HTTP POST
     restTemplate.exchange(insertUrl, HttpMethod.POST, requestEntity, Void.class);
+    dataBatch.clear();
   }
 
 
