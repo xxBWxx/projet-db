@@ -10,6 +10,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+
 import com.dant.webproject.dbcomponents.Column;
 import com.dant.webproject.dbcomponents.Operande;
 
@@ -24,13 +25,50 @@ public class SelectService implements ISelectService {
         this.databaseManagementService = databaseManagementService;
     }
 
-    public Map<String, List<Object>> selectAll(String tableName) {
+    /*public Map<String, List<Object>> selectAll(String tableName) {
         Map<String, List<Object>> res = new LinkedHashMap<>();
         for (Map.Entry<String, Column> entry : databaseManagementService.getDatabase().get(tableName).entrySet()) {
             res.put(entry.getKey(), entry.getValue().getValues());
         }
         return res;
+    }*/
+    public List<Map<String, Object>> selectAll(String tableName) {
+        Map<String, Map<String, Column>> database = databaseManagementService.getDatabase();
+        Map<String, Column> table = database.get(tableName);
+
+        if (table == null) {
+            throw new IllegalArgumentException("La table " + tableName + " n'existe pas dans la base de données");
+        }
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+
+        // Récupérer les noms de colonnes
+        Set<String> columnNames = table.keySet();
+
+        // Récupérer les valeurs pour chaque colonne (toutes les colonnes ont le même nombre de valeurs)
+        int numRows = table.values().iterator().next().getValues().size();
+
+        for (int rowIndex = 0; rowIndex < numRows; rowIndex++) {
+            Map<String, Object> row = new LinkedHashMap<>();
+
+            for (String columnName : columnNames) {
+                Column column = table.get(columnName);
+                Object value = column.getValues().get(rowIndex);
+                row.put(columnName, value);
+            }
+
+            rows.add(row);
+        }
+
+        return rows;
     }
+
+
+
+
+
+
+
 
     public Map<String, List<Object>> select_cols(String tableName, List<String> col_names) {
         // Récupérer les données de la table
@@ -99,4 +137,95 @@ public class SelectService implements ISelectService {
 
         return filteredResult;
     }
+
+
+    public List<Map<String, Object>> select_opti(String tableName, List<String> colNames, List<List<String>> conditions) {
+        Map<String, Map<String, Column>> database = databaseManagementService.getDatabase();
+        Map<String, Column> table = database.get(tableName);
+
+        if (table == null) {
+            throw new IllegalArgumentException("La table " + tableName + " n'existe pas dans la base de données");
+        }
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+
+        Set<String> columnNames = table.keySet();
+        int numRows = table.values().iterator().next().getValues().size();
+
+        for (int rowIndex = 0; rowIndex < numRows; rowIndex++) {
+            Map<String, Object> row = new LinkedHashMap<>();
+
+            // Filtrer les colonnes si spécifiées
+            if (colNames != null && !colNames.isEmpty()) {
+                for (String columnName : colNames) {
+                    Column column = table.get(columnName);
+                    if (column != null) {
+                        Object value = column.getValues().get(rowIndex);
+                        row.put(columnName, value);
+                    }
+                }
+            } else {
+                // Sélectionner toutes les colonnes si aucune colonne spécifique n'est demandée
+                for (String columnName : columnNames) {
+                    Column column = table.get(columnName);
+                    Object value = column.getValues().get(rowIndex);
+                    row.put(columnName, value);
+                }
+            }
+
+            // Vérifier les conditions si spécifiées
+            if (conditions != null && !conditions.isEmpty()) {
+                if (evaluateConditions(table,row, conditions)) {
+                    rows.add(row);
+                }
+            } else {
+                rows.add(row);
+            }
+        }
+
+        return rows;
+    }
+
+    private boolean evaluateConditions(Map<String, Column> table,Map<String, Object> row, List<List<String>> conditions) {
+
+        for (List<String> condition : conditions) {
+            String columnName = condition.get(0);
+            String operator = condition.get(1);
+            String operand = condition.get(2);
+
+            Column column = table.get(columnName);
+            if (column == null) {
+                throw new IllegalArgumentException("La colonne " + columnName + " n'existe pas dans la table");
+            }
+
+            Object value = row.get(columnName);
+            if (value == null) {
+                return false; // Si la valeur de la colonne est nulle, ne satisfait pas la condition
+            }
+
+            switch (operator) {
+                case "=":
+                    if (!value.toString().equals(operand)) {
+                        return false;
+                    }
+                    break;
+                case ">":
+                    if (!(Double.parseDouble(value.toString()) > Double.parseDouble(operand))) {
+                        return false;
+                    }
+                    break;
+                case "<":
+                    if (!(Double.parseDouble(value.toString()) < Double.parseDouble(operand))) {
+                        return false;
+                    }
+                    break;
+                // Ajoutez d'autres opérateurs au besoin
+                default:
+                    throw new IllegalArgumentException("Opérateur non pris en charge: " + operator);
+            }
+        }
+
+        return true; // Toutes les conditions sont satisfaites pour cette ligne
+    }
+
 }

@@ -142,7 +142,7 @@ public class DistributedService {
     public Map<String, List<Object>> selectAllDistributed(String tableName) {
 
         Map<String, List<Object>> value = new HashMap<>();
-        selectService.selectAll(tableName).forEach((key, val) -> {
+       /* selectService.selectAll(tableName).forEach((key, val) -> {
             if (!value.containsKey(key)) {
                 value.put(key, new ArrayList<>());
             }
@@ -164,7 +164,7 @@ public class DistributedService {
             } catch (Exception e) {
                 e.printStackTrace(); // Handle exception or log it
             }
-        }
+        }*/
 
         return value; // Return empty if not found anywhere
     }
@@ -227,7 +227,7 @@ public class DistributedService {
      * Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET,
      * null, new ParameterizedTypeReference<Map<String, List<Object>>>()
      * {}).getBody();
-     * result.forEach((key, v) -> value.get(key).addAll(v));
+     * result.forEach((key, v) -> value.get(key).addAll(v)); 
      *
      * } catch (Exception e) {
      * e.printStackTrace(); // Handle exception or log it

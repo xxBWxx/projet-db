@@ -122,7 +122,7 @@ public class ParquetService {
 
       start = System.currentTimeMillis();
 
-      int batchSize = 200000;
+      int batchSize = 3000;
 
       while ((pages = reader.readNextRowGroup()) != null) {
 
@@ -133,7 +133,7 @@ public class ParquetService {
             new GroupRecordConverter(schema));
 
         // TODO: replace random number with rows
-        for (int i = 0; i < 3000000; i++) {
+        for (int i = 0; i < 30000; i++) {
           SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
           b++;
           if (i == 0) {

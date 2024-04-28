@@ -26,8 +26,13 @@ public class SelectController {
     private SelectService selectService;
 
     @GetMapping("/selectallfrom")
-    public Map<String, List<Object>> selectAll(@RequestParam String tableName) {
+    public List<Map<String, Object>> selectAll(@RequestParam String tableName) {
         return selectService.selectAll(tableName);
+    }
+
+    @PostMapping("/select_opti")
+    public List<Map<String, Object>> select_opti(@RequestParam String tableName, @RequestBody(required = false) List<String> colNames, @RequestBody(required = false) List<List<String>> conditions) {
+        return selectService.select_opti(tableName, colNames, conditions);
     }
 
     @PostMapping("/selectcols")
@@ -57,3 +62,6 @@ public class SelectController {
         return selectService.select_where(tableName, listop);
     }
 }
+
+
+
