@@ -92,6 +92,7 @@ public class ParquetService {
     return res;
   }
 
+
   public void parseParquetFile(String filePath, String tableName) {
     try {
       long start = System.currentTimeMillis();
@@ -117,6 +118,9 @@ public class ParquetService {
       long a = 0, b = 0;
 
       start = System.currentTimeMillis();
+
+      int batchSize = 100;
+
       while ((pages = reader.readNextRowGroup()) != null) {
 
         a++;
@@ -126,7 +130,7 @@ public class ParquetService {
             new GroupRecordConverter(schema));
 
         // TODO: replace random number with rows
-        for (int i = 0; i < 2000000; i++) {
+        for (int i = 0; i < 1000; i++) {
           SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
           b++;
           if (i == 0) {
@@ -147,49 +151,59 @@ public class ParquetService {
           serverIndex = i % 3;
           if(serverIndex == 0)
             tableModificationService.insert(tableName, columns, values);
-          if(serverIndex == 1)
+
+          if(serverIndex == 1){
             file2.add(values);
-          if(serverIndex == 2)
+            if(file2.size()>=batchSize){
+              sendBatch(file2, 0, tableName, columns);
+              file2.clear();
+            }
+          }
+          if(serverIndex == 2){
             file3.add(values);
+            if(file3.size()>=batchSize){
+              sendBatch(file3, 1, tableName, columns);
+              file3.clear();
+            }
+          }
         }
-
       }
 
-      //distributedService.insertmult(tableName,columns, file1);
-      String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-
-      HttpHeaders headers = new HttpHeaders();
-      headers.setContentType(MediaType.APPLICATION_JSON);
-
-      Map<String, Object> requestBody = new HashMap<>();
-      requestBody.put("col_name", columns);
-
-      for(int i=0; i<2; i++){
-        if(i==0)
-          requestBody.put("value", file2);
-        if(i==1)
-          requestBody.put("value", file3);
-
-        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
-
-        // Construire l'URL pour le point de terminaison d'insertion
-        String insertUrl = serverUrls[i] + "/tableModification/insertMult?table=" + tableName;
-
-        // Effectuer la requête HTTP POST
-        restTemplate.exchange(insertUrl, HttpMethod.POST, requestEntity, Void.class);
-        requestBody.remove("value");
-      }
-
+      if(!file2.isEmpty())
+        sendBatch(file2, 0, tableName, columns);
+      if(!file3.isEmpty())
+        sendBatch(file3, 1, tableName, columns);
 
 
       System.err.println(a + " " + b);
       reader.close();
+
     } catch (
 
     IOException e) {
       e.printStackTrace();
     }
   }
+
+  private void sendBatch(List<List<String>> dataBatch, int serverIndex, String tableName, List<String> columns) {
+    String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    Map<String, Object> requestBody = new HashMap<>();
+    requestBody.put("col_name", columns);
+    requestBody.put("value", dataBatch);
+
+    HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+    // Construire l'URL pour le point de terminaison d'insertion
+    String insertUrl = serverUrls[serverIndex] + "/tableModification/insertMult?table=" + tableName;
+    // Effectuer la requête HTTP POST
+    restTemplate.exchange(insertUrl, HttpMethod.POST, requestEntity, Void.class);
+  }
+
+
 
   public void parseParquetFile1(String filePath, String tableName) {
     try {
