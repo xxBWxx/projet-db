@@ -122,7 +122,7 @@ public class ParquetService {
 
       start = System.currentTimeMillis();
 
-      int batchSize = 12000;
+      int batchSize = 2500;
       //12000; 5 Thread 1 000 000 => 5.71 s
       //45000 batchSize; 10 Thread pour 3 000 000 de lignes => 20 secondes
 
@@ -136,7 +136,7 @@ public class ParquetService {
 
         // TODO: replace random number with rows
         SimpleGroup simpleGroup;
-        for (int i = 0; i < 1000000; i++) {
+        for (int i = 0; i < 10; i++) {
           simpleGroup = (SimpleGroup) recordReader.read();
           b++;
           if (i == 0) {
@@ -159,8 +159,7 @@ public class ParquetService {
             final List<String> finalColumns = columns;
             final List<String> finalVal = values;
             executor.submit(() -> tableModificationService.insert(tableName, finalColumns, finalVal));
-            values.clear();
-            //tableModificationService.insert(tableName, columns, values);
+//            tableModificationService.insert(tableName, columns, values);
             continue;
           }
           if(serverIndex == 1){
