@@ -105,8 +105,8 @@ public class ParquetService {
 
       int serverIndex;
 
-      List<DataType> types = new ArrayList<>();
-      List<String> columns = new ArrayList<>();
+      List<DataType> types;
+      List<String> columns = null;
 
       List<String> values;
       List<List<String>> file2 = new ArrayList<>();
@@ -122,7 +122,9 @@ public class ParquetService {
 
       start = System.currentTimeMillis();
 
-      int batchSize = 3000;
+      int batchSize = 1200;
+      //12000; 10 Thread 1 000 000 => 6 secondes
+      //45000 batchSize; 10 Thread pour 3 000 000 de lignes => 20 secondes
 
       while ((pages = reader.readNextRowGroup()) != null) {
 
@@ -133,7 +135,7 @@ public class ParquetService {
             new GroupRecordConverter(schema));
 
         // TODO: replace random number with rows
-        for (int i = 0; i < 30000; i++) {
+        for (int i = 0; i < 100000; i++) {
           SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
           b++;
           if (i == 0) {
@@ -153,7 +155,10 @@ public class ParquetService {
           }
           serverIndex = i % 3;
           if(serverIndex == 0){
-            tableModificationService.insert(tableName, columns, values);
+            final List<String> finalColumns = columns;
+            final List<String> finalVal = values;
+            executor.submit(() -> tableModificationService.insert(tableName, finalColumns, finalVal));
+            //tableModificationService.insert(tableName, columns, values);
             continue;
           }
           if(serverIndex == 1){

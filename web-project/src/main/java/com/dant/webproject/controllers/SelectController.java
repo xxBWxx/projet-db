@@ -3,7 +3,9 @@ package com.dant.webproject.controllers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.dant.webproject.dbcomponents.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,10 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dant.webproject.dbcomponents.EqOperande;
-import com.dant.webproject.dbcomponents.InfOperande;
-import com.dant.webproject.dbcomponents.Operande;
-import com.dant.webproject.dbcomponents.SupOperande;
 import com.dant.webproject.services.SelectService;
 
 @RestController
@@ -31,7 +29,9 @@ public class SelectController {
     }
 
     @PostMapping("/select_opti")
-    public List<Map<String, Object>> select_opti(@RequestParam String tableName, @RequestBody(required = false) List<String> colNames, @RequestBody(required = false) List<List<String>> conditions) {
+    public List<Map<String, Object>> select_opti(@RequestParam String tableName, @RequestBody Map<String, Object> requestData) {
+        List<String> colNames = (List<String>) (requestData.get("col_name"));
+        List<List<String>> conditions = (List<List<String>>) (requestData.get("conditions"));
         return selectService.select_opti(tableName, colNames, conditions);
     }
 
