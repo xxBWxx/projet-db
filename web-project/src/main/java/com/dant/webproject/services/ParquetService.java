@@ -96,7 +96,7 @@ public class ParquetService {
 
 
   public void parseParquetFile(String filePath, String tableName) {
-    ExecutorService executor = Executors.newFixedThreadPool(10);  // Créer un pool de 2 threads
+    ExecutorService executor = Executors.newFixedThreadPool(4);  // Créer un pool de 2 threads
     try {
       long start = System.currentTimeMillis();
       ParquetFileReader reader = ParquetFileReader.open(
@@ -122,8 +122,8 @@ public class ParquetService {
 
       start = System.currentTimeMillis();
 
-      int batchSize = 1200;
-      //12000; 10 Thread 1 000 000 => 6 secondes
+      int batchSize = 12000;
+      //12000; 5 Thread 1 000 000 => 5.71 s
       //45000 batchSize; 10 Thread pour 3 000 000 de lignes => 20 secondes
 
       while ((pages = reader.readNextRowGroup()) != null) {
@@ -135,8 +135,9 @@ public class ParquetService {
             new GroupRecordConverter(schema));
 
         // TODO: replace random number with rows
-        for (int i = 0; i < 100000; i++) {
-          SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
+        SimpleGroup simpleGroup;
+        for (int i = 0; i < 1000000; i++) {
+          simpleGroup = (SimpleGroup) recordReader.read();
           b++;
           if (i == 0) {
             types = getTypesOfGroup(simpleGroup);
@@ -158,13 +159,14 @@ public class ParquetService {
             final List<String> finalColumns = columns;
             final List<String> finalVal = values;
             executor.submit(() -> tableModificationService.insert(tableName, finalColumns, finalVal));
+            values.clear();
             //tableModificationService.insert(tableName, columns, values);
             continue;
           }
           if(serverIndex == 1){
             file2.add(values);
             if(file2.size()>=batchSize){
-              List<List<String>> tmp = file3;
+              List<List<String>> tmp = file2;
               final List<String> finalColumns = columns;
               executor.submit(() -> sendBatch(tmp, 0, tableName, finalColumns));
               //sendBatch(tmp, 0, tableName, columns);
