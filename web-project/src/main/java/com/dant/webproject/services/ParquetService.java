@@ -122,7 +122,7 @@ public class ParquetService {
 
       start = System.currentTimeMillis();
 
-      int batchSize = 2500;
+      int batchSize = 3000;
       //12000; 5 Thread 1 000 000 => 5.71 s
       //45000 batchSize; 10 Thread pour 3 000 000 de lignes => 20 secondes
 

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.dant.webproject.dbcomponents.DataType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -136,6 +137,24 @@ public class SelectService implements ISelectService {
         }
 
         return filteredResult;
+
+        /* pour retourner les lignes */
+        /*
+        // Construire les lignes filtrées
+        List<Map<String, Object>> filteredRows = new ArrayList<>();
+        for (Integer index : filteredIndices) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            for (Map.Entry<String, Column> entry : tableData.entrySet()) {
+                String columnName = entry.getKey();
+                Object columnValue = entry.getValue().getValues().get(index);
+                row.put(columnName, columnValue);
+            }
+            filteredRows.add(row);
+        }
+
+        return filteredRows;
+    }
+         */
     }
 
 
@@ -188,6 +207,7 @@ public class SelectService implements ISelectService {
 
     private boolean evaluateConditions(Map<String, Column> table,Map<String, Object> row, List<List<String>> conditions) {
 
+        int compteur=0;
         for (List<String> condition : conditions) {
             String columnName = condition.get(0);
             String operator = condition.get(1);
@@ -205,18 +225,18 @@ public class SelectService implements ISelectService {
 
             switch (operator) {
                 case "=":
-                    if (!value.toString().equals(operand)) {
-                        return false;
+                    if (compareValues(value,operand,column.getType()) == 0) {
+                        compteur++;
                     }
                     break;
                 case ">":
-                    if (!(Double.parseDouble(value.toString()) > Double.parseDouble(operand))) {
-                        return false;
+                    if (compareValues(value,operand,column.getType()) > 0) {
+                        compteur++;
                     }
                     break;
                 case "<":
-                    if (!(Double.parseDouble(value.toString()) < Double.parseDouble(operand))) {
-                        return false;
+                    if (compareValues(value,operand,column.getType()) < 0) {
+                        compteur++;
                     }
                     break;
                 // Ajoutez d'autres opérateurs au besoin
@@ -225,7 +245,45 @@ public class SelectService implements ISelectService {
             }
         }
 
-        return true; // Toutes les conditions sont satisfaites pour cette ligne
+        return compteur == conditions.size(); // Toutes les conditions sont satisfaites pour cette ligne
+    }
+
+    private int compareValues(Object value1, Object value2, DataType columnType) {
+        if (columnType == DataType.INTEGER) {
+            Integer intValue1 = Integer.parseInt(value1.toString());
+            Integer intValue2 = Integer.parseInt(value2.toString());
+
+            if (intValue1.intValue() == intValue2.intValue()) {
+                return 0;
+            }
+
+            else if (intValue1.intValue() < intValue2.intValue()) {
+                return -1;
+            }
+
+            else {
+                return 1;
+            }
+        } else if (columnType == DataType.DOUBLE) {
+            Double doubleValue1 = Double.parseDouble(value1.toString());
+            Double doubleValue2 = Double.parseDouble(value2.toString());
+
+            if (doubleValue1.doubleValue() == doubleValue2.doubleValue()) {
+                return 0;
+            }
+
+            else if (doubleValue1.doubleValue() < doubleValue2.doubleValue()) {
+                return -1;
+            }
+
+            else {
+                return 1;
+            }
+        } else if (columnType == DataType.DATETIME_STRING) {
+            return value1.toString().compareTo(value2.toString());
+        } else {
+            return ((String) value1).compareTo((String) value2);
+        }
     }
 
 }
