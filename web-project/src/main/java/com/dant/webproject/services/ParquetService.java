@@ -136,7 +136,7 @@ public class ParquetService {
 
         // TODO: replace random number with rows
         SimpleGroup simpleGroup;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 30000; i++) {
           simpleGroup = (SimpleGroup) recordReader.read();
           b++;
           if (i == 0) {
@@ -156,10 +156,10 @@ public class ParquetService {
           }
           serverIndex = i % 3;
           if(serverIndex == 0){
-            final List<String> finalColumns = columns;
-            final List<String> finalVal = values;
-            executor.submit(() -> tableModificationService.insert(tableName, finalColumns, finalVal));
-//            tableModificationService.insert(tableName, columns, values);
+//            final List<String> finalColumns = columns;
+//            final List<String> finalVal = values;
+//            executor.submit(() -> tableModificationService.insert(tableName, finalColumns, finalVal));
+            tableModificationService.insert(tableName, columns, values);
             continue;
           }
           if(serverIndex == 1){
