@@ -26,145 +26,35 @@ public class SelectService implements ISelectService {
         this.databaseManagementService = databaseManagementService;
     }
 
-    /*public Map<String, List<Object>> selectAll(String tableName) {
-        Map<String, List<Object>> res = new LinkedHashMap<>();
-        for (Map.Entry<String, Column> entry : databaseManagementService.getDatabase().get(tableName).entrySet()) {
-            res.put(entry.getKey(), entry.getValue().getValues());
-        }
-        return res;
-    }*/
-    public List<Map<String, Object>> selectAll(String tableName) {
+    public void validate_condition(String tableName, List<String> colNames, List<List<String>> conditions){
         Map<String, Map<String, Column>> database = databaseManagementService.getDatabase();
         Map<String, Column> table = database.get(tableName);
 
         if (table == null) {
             throw new IllegalArgumentException("La table " + tableName + " n'existe pas dans la base de données");
         }
-
-        List<Map<String, Object>> rows = new ArrayList<>();
-
-        // Récupérer les noms de colonnes
-        Set<String> columnNames = table.keySet();
-
-        // Récupérer les valeurs pour chaque colonne (toutes les colonnes ont le même nombre de valeurs)
-        int numRows = table.values().iterator().next().getValues().size();
-
-        for (int rowIndex = 0; rowIndex < numRows; rowIndex++) {
-            Map<String, Object> row = new LinkedHashMap<>();
-
-            for (String columnName : columnNames) {
-                Column column = table.get(columnName);
-                Object value = column.getValues().get(rowIndex);
-                row.put(columnName, value);
+        for (String columnName : colNames) {
+            Column column = table.get(columnName);
+            if (column == null) {
+                throw new IllegalArgumentException("La colonne" + columnName + " n'existe pas dans la table");
             }
-
-            rows.add(row);
         }
 
-        return rows;
+        for (List<String> condition : conditions) {
+            String columnName = condition.get(0);
+            Column column = table.get(columnName);
+            if (column == null) {
+                throw new IllegalArgumentException("La colonne" + columnName + " n'existe pas dans la table");
+            }
+
+        }
     }
 
+    public List<Map<String, Object>> select(String tableName, List<String> colNames, List<List<String>> conditions) {
+        validate_condition(tableName,colNames,conditions);
 
-
-
-
-
-
-
-    public Map<String, List<Object>> select_cols(String tableName, List<String> col_names) {
-        // Récupérer les données de la table
-        Map<String, Column> tableData = databaseManagementService.getDatabase().get(tableName);
-        // Vérifier si la table existe dans la base de données
-        if (tableData == null) {
-            throw new IllegalArgumentException(
-                    "Table non trouvée dans la base de données");
-        }
-
-        for (String columnName : col_names) {
-            // Vérifier si la colonne existe dans les données de la table
-            if (!tableData.containsKey(columnName)) {
-                throw new IllegalArgumentException(
-                        "La colonne " + columnName + " n'existe pas dans la table");
-            }
-        }
-
-        Map<String, List<Object>> results = new LinkedHashMap<>();
-
-        for (String columnName : col_names) {
-            results.put(columnName, tableData.get(columnName).getValues());
-        }
-
-        return results;
-
-    }
-
-    public Map<String, List<Object>> select_where(String table, List<Operande> listop) {
-        Map<String, Column> tableData = databaseManagementService.getDatabase().get(table);
-        if (tableData == null) {
-            throw new IllegalArgumentException("Table non trouvée dans la base de données");
-        }
-
-        Map<String, List<Object>> filteredResult = new LinkedHashMap<>();
-
-        List<List<Integer>> listind = new ArrayList<>();
-
-        for (Operande op : listop) {
-            List<Integer> l = new ArrayList<>();
-            if (op.eval(tableData)) {
-                l = op.getIndice();
-            }
-            listind.add(l);
-        }
-
-        // Initialisation avec les éléments de la première sous-liste
-        Set<Integer> indices = new HashSet<>(listind.get(0));
-
-        // Intersection avec les éléments des sous-listes suivantes
-        for (List<Integer> liste : listind) {
-            indices.retainAll(liste);
-        }
-
-        for (Map.Entry<String, Column> entry : tableData.entrySet()) {
-            String currentColumn = entry.getKey();
-            List<Object> columnValues = entry.getValue().getValues();
-            List<Object> filteredColumnData = new ArrayList<>();
-
-            for (Integer ind : indices) {
-                filteredColumnData.add(columnValues.get(ind));
-            }
-
-            filteredResult.put(currentColumn, filteredColumnData);
-        }
-
-        return filteredResult;
-
-        /* pour retourner les lignes */
-        /*
-        // Construire les lignes filtrées
-        List<Map<String, Object>> filteredRows = new ArrayList<>();
-        for (Integer index : filteredIndices) {
-            Map<String, Object> row = new LinkedHashMap<>();
-            for (Map.Entry<String, Column> entry : tableData.entrySet()) {
-                String columnName = entry.getKey();
-                Object columnValue = entry.getValue().getValues().get(index);
-                row.put(columnName, columnValue);
-            }
-            filteredRows.add(row);
-        }
-
-        return filteredRows;
-    }
-         */
-    }
-
-
-    public List<Map<String, Object>> select_opti(String tableName, List<String> colNames, List<List<String>> conditions) {
         Map<String, Map<String, Column>> database = databaseManagementService.getDatabase();
         Map<String, Column> table = database.get(tableName);
-
-        if (table == null) {
-            throw new IllegalArgumentException("La table " + tableName + " n'existe pas dans la base de données");
-        }
 
         List<Map<String, Object>> rows = new ArrayList<>();
 
@@ -178,10 +68,8 @@ public class SelectService implements ISelectService {
             if (colNames != null && !colNames.isEmpty()) {
                 for (String columnName : colNames) {
                     Column column = table.get(columnName);
-                    if (column != null) {
-                        Object value = column.getValues().get(rowIndex);
-                        row.put(columnName, value);
-                    }
+                    Object value = column.getValues().get(rowIndex);
+                    row.put(columnName, value);
                 }
             } else {
                 // Sélectionner toutes les colonnes si aucune colonne spécifique n'est demandée
@@ -214,14 +102,7 @@ public class SelectService implements ISelectService {
             String operand = condition.get(2);
 
             Column column = table.get(columnName);
-            if (column == null) {
-                throw new IllegalArgumentException("La colonne " + columnName + " n'existe pas dans la table");
-            }
-
             Object value = row.get(columnName);
-            if (value == null) {
-                return false; // Si la valeur de la colonne est nulle, ne satisfait pas la condition
-            }
 
             switch (operator) {
                 case "=":
@@ -250,37 +131,22 @@ public class SelectService implements ISelectService {
 
     private int compareValues(Object value1, Object value2, DataType columnType) {
         if (columnType == DataType.INTEGER) {
-            Integer intValue1 = Integer.parseInt(value1.toString());
-            Integer intValue2 = Integer.parseInt(value2.toString());
+            int intValue1 = Integer.parseInt(value1.toString());
+            int intValue2 = Integer.parseInt(value2.toString());
 
-            if (intValue1.intValue() == intValue2.intValue()) {
+            if (intValue1 == intValue2) {
                 return 0;
             }
 
-            else if (intValue1.intValue() < intValue2.intValue()) {
-                return -1;
-            }
-
-            else {
-                return 1;
-            }
+            return (intValue1 < intValue2) ? -1 : 1;
         } else if (columnType == DataType.DOUBLE) {
-            Double doubleValue1 = Double.parseDouble(value1.toString());
-            Double doubleValue2 = Double.parseDouble(value2.toString());
+            double doubleValue1 = Double.parseDouble(value1.toString());
+            double doubleValue2 = Double.parseDouble(value2.toString());
 
-            if (doubleValue1.doubleValue() == doubleValue2.doubleValue()) {
+            if (doubleValue1 == doubleValue2) {
                 return 0;
             }
-
-            else if (doubleValue1.doubleValue() < doubleValue2.doubleValue()) {
-                return -1;
-            }
-
-            else {
-                return 1;
-            }
-        } else if (columnType == DataType.DATETIME_STRING) {
-            return value1.toString().compareTo(value2.toString());
+            return (doubleValue1 < doubleValue2) ? -1 : 1;
         } else {
             return ((String) value1).compareTo((String) value2);
         }

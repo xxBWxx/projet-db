@@ -25,17 +25,17 @@ public class SelectDistributedController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SelectDistributedController.class);
 
-    @GetMapping("/selectAllFrom")
+    /*@GetMapping("/selectAllFrom")
     public Map<String, List<Object>> selectAll(@RequestParam String tableName) {
         LOGGER.info("Receiving select * from " + tableName + " request");
         return distributedService.selectAllDistributed(tableName);
-    }
+    }*/
 
-    @PostMapping("/selectCols")
+   /* @PostMapping("/selectCols")
     public Map<String, List<Object>> selectcols(@RequestParam String tableName, @RequestBody List<String> col_names) {
         LOGGER.info("Receiving select " + col_names.toString() + " from " + tableName + " request");
         return distributedService.select_colsDistributed(tableName, col_names);
-    }
+    }*/
 
    /* @GetMapping("/selectWhereEqFrom")
     public Map<String, List<Object>> selectWhere_eq(@RequestParam String tableName, @RequestParam String colName,
@@ -59,10 +59,10 @@ public class SelectDistributedController {
     }
     */
 
-   @PostMapping("/select_where")
+  /* @PostMapping("/select_where")
    public Map<String, List<Object>> selectWhere(@RequestParam String tableName, @RequestBody List<List<String>> op) {
 
        return distributedService.selectWhereDistributed(tableName, op);
-   }
+   }*/
 
 }

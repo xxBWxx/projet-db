@@ -139,10 +139,10 @@ public class DistributedService {
         tableModificationService.insertMult(tableName,col,value);
     }
 
-    public Map<String, List<Object>> selectAllDistributed(String tableName) {
+    /*public Map<String, List<Object>> selectAllDistributed(String tableName) {
 
         Map<String, List<Object>> value = new HashMap<>();
-       /* selectService.selectAll(tableName).forEach((key, val) -> {
+       selectService.selectAll(tableName).forEach((key, val) -> {
             if (!value.containsKey(key)) {
                 value.put(key, new ArrayList<>());
             }
@@ -164,12 +164,12 @@ public class DistributedService {
             } catch (Exception e) {
                 e.printStackTrace(); // Handle exception or log it
             }
-        }*/
+        }
 
         return value; // Return empty if not found anywhere
-    }
+    }*/
 
-    public Map<String, List<Object>> select_colsDistributed(String tableName, List<String> col_names) {
+   /* public Map<String, List<Object>> select_colsDistributed(String tableName, List<String> col_names) {
         String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
 
         Map<String, List<Object>> value = new HashMap<>();
@@ -201,7 +201,7 @@ public class DistributedService {
         }
 
         return value; // Return empty if not found anywhere
-    }
+    }*/
 
     /*
      * public Map<String, List<Object>> selectWhere_eqDistributed(String tableName,
@@ -227,7 +227,7 @@ public class DistributedService {
      * Map<String, List<Object>> result = restTemplate.exchange(url, HttpMethod.GET,
      * null, new ParameterizedTypeReference<Map<String, List<Object>>>()
      * {}).getBody();
-     * result.forEach((key, v) -> value.get(key).addAll(v)); 
+     * result.forEach((key, v) -> value.get(key).addAll(v));
      *
      * } catch (Exception e) {
      * e.printStackTrace(); // Handle exception or log it
@@ -375,7 +375,7 @@ public class DistributedService {
         return aggregatedResults;
     }
 
-    public Map<String, List<Object>> selectWhereDistributed(String tableName, List<List<String>> op) {
+   /* public Map<String, List<Object>> selectWhereDistributed(String tableName, List<List<String>> op) {
         Map<String, List<Object>> value = new HashMap<>();
 
         List<Operande> listop = new ArrayList<>();
@@ -421,6 +421,6 @@ public class DistributedService {
       }
 
      return value; // Return empty if not found anywhere
-    }
+    }*/
 
 }
