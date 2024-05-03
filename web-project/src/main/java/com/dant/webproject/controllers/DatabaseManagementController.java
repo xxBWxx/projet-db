@@ -1,5 +1,6 @@
 package com.dant.webproject.controllers;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,12 +30,12 @@ public class DatabaseManagementController {
     }
 
     @GetMapping("/showTables")
-    public String showTables() {
+    public Map<String, List<String>> showTables() {
+        Map<String, List<String>> res = new HashMap<>();
         List<String> tables = databaseManagementService.showTables();
-        StringBuilder response = new StringBuilder("Tables in database:\n");
-        for (String table : tables) {
-            response.append("- ").append(table).append("\n");
-        }
-        return response.toString();
+
+        res.put("tables", tables);
+
+        return res;
     }
 }
