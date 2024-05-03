@@ -135,6 +135,34 @@ public class DistributedService {
         restTemplate.exchange(insertUrl, HttpMethod.POST, requestEntity, Void.class);
     }
 
+    public List<Map<String, Object>> select(String tableName, List<String> colNames, List<List<String>> conditions){
+
+        List<Map<String, Object>> res = selectService.select(tableName, colNames, conditions);
+        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        for (String serverUrl : serverUrls) {
+
+            // Construire le corps de la requête
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("columns", colNames);
+            requestBody.put("where", conditions);
+
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+            // Construire l'URL pour le point de terminaison d'insertion
+            String insertUrl = serverUrl + "/select/select?tableName=" + tableName;
+
+            // Effectuer la requête HTTP POST
+            List<Map<String, Object>> result = restTemplate.exchange(insertUrl, HttpMethod.POST, requestEntity,
+                    new ParameterizedTypeReference<List<Map<String, Object>>>() {}).getBody();
+            res.addAll(result);
+        }
+        return res;
+    }
+
     public void insertmult(String tableName, List<String> col, List<List<String>> value, int modulo) {
         tableModificationService.insertMult(tableName,col,value);
     }

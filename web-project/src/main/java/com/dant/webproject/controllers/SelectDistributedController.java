@@ -25,44 +25,11 @@ public class SelectDistributedController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SelectDistributedController.class);
 
-    /*@GetMapping("/selectAllFrom")
-    public Map<String, List<Object>> selectAll(@RequestParam String tableName) {
-        LOGGER.info("Receiving select * from " + tableName + " request");
-        return distributedService.selectAllDistributed(tableName);
-    }*/
-
-   /* @PostMapping("/selectCols")
-    public Map<String, List<Object>> selectcols(@RequestParam String tableName, @RequestBody List<String> col_names) {
-        LOGGER.info("Receiving select " + col_names.toString() + " from " + tableName + " request");
-        return distributedService.select_colsDistributed(tableName, col_names);
-    }*/
-
-   /* @GetMapping("/selectWhereEqFrom")
-    public Map<String, List<Object>> selectWhere_eq(@RequestParam String tableName, @RequestParam String colName,
-            @RequestParam String val) {
-        LOGGER.info("Receiving select * from " + tableName + " WHERE " + colName + "=" + val);
-        return distributedService.selectWhere_eqDistributed(tableName, colName, val);
+    @PostMapping("/select")
+    public List<Map<String, Object>> select(@RequestParam String tableName, @RequestBody Map<String, Object> requestData) {
+        List<String> colNames = (List<String>) (requestData.get("columns"));
+        List<List<String>> conditions = (List<List<String>>) (requestData.get("where"));
+        return distributedService.select(tableName, colNames, conditions);
     }
-
-    @GetMapping("/selectWhereSupFrom")
-    public Map<String, List<Object>> selectWhere_sup(@RequestParam String tableName, @RequestParam String colName,
-            @RequestParam String val) {
-        LOGGER.info("Receiving select * from " + tableName + " WHERE " + colName + ">" + val);
-        return distributedService.selectWhere_supDistributed(tableName, colName, val);
-    }
-
-    @GetMapping("/selectWhereInfFrom")
-    public Map<String, List<Object>> selectWhere_inf(@RequestParam String tableName, @RequestParam String colName,
-            @RequestParam String val) {
-        LOGGER.info("Receiving select * from " + tableName + " WHERE " + colName + "<" + val);
-        return distributedService.selectWhere_infDistributed(tableName, colName, val);
-    }
-    */
-
-  /* @PostMapping("/select_where")
-   public Map<String, List<Object>> selectWhere(@RequestParam String tableName, @RequestBody List<List<String>> op) {
-
-       return distributedService.selectWhereDistributed(tableName, op);
-   }*/
 
 }

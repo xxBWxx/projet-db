@@ -31,7 +31,7 @@ public class DatabaseManagementService implements IDatabaseManagementService {
           "La table " + tableName + " existe deja dans la base de donnees");
     }
 
-    database.put(tableName, null);
+    database.put(tableName, new HashMap<String, Column>());
   }
 
   public Map<String, Map<String, Column>> getDatabase() {
