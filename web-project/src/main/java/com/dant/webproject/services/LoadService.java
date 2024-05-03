@@ -1,6 +1,7 @@
 package com.dant.webproject.services;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +20,7 @@ public class LoadService implements ILoadService {
   }
 
   public ResponseEntity<String> loadFileToTable(HttpServletRequest request, String tableName) throws IOException {
-    String res = parquetService.uploadFile(request.getInputStream());
-    parquetService.parseParquetFile(res, tableName);
-    parquetService.deleteFile(res);
-
-    return ResponseEntity.ok("File data has been successfully loaded to database.");
+    InputStream inputStream = request.getInputStream();
+    return parquetService.parseParquetFile(inputStream, tableName);
   }
 }

@@ -29,6 +29,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import com.dant.webproject.dbcomponents.DataType;
@@ -55,28 +56,29 @@ public class ParquetService {
   private String getValueForField(SimpleGroup group, String fieldName, int position) {
     String res = "-";
 
-    try{
+    try {
       return group.getValueToString(position, 0);
-    } catch(Exception e) {
+    } catch (Exception e) {
       return res;
     }
 
-
-    /*int fieldCount = group.getType().getFieldCount();
-
-    for (int fieldIndex = 0; fieldIndex < fieldCount; fieldIndex++) {
-      try {
-        if (fieldName == group.getType().getFieldName(fieldIndex)) {
-          res = group.getValueToString(fieldIndex, 0);
-
-          break;
-        }
-      } catch (Exception e) {
-        break;
-      }
-    }
-
-    return res;*/
+    /*
+     * int fieldCount = group.getType().getFieldCount();
+     * 
+     * for (int fieldIndex = 0; fieldIndex < fieldCount; fieldIndex++) {
+     * try {
+     * if (fieldName == group.getType().getFieldName(fieldIndex)) {
+     * res = group.getValueToString(fieldIndex, 0);
+     * 
+     * break;
+     * }
+     * } catch (Exception e) {
+     * break;
+     * }
+     * }
+     * 
+     * return res;
+     */
   }
 
   private List<String> getFieldNames(SimpleGroup group) {
@@ -93,13 +95,14 @@ public class ParquetService {
     return res;
   }
 
-
-  public void parseParquetFile(String filePath, String tableName) {
-    ExecutorService executor = Executors.newFixedThreadPool(10);  // Créer un pool de 2 threads
+  public ResponseEntity<String> parseParquetFile(InputStream inputStream, String tableName) {
+    ExecutorService executor = Executors.newFixedThreadPool(10); // Créer un pool de 2 threads
     try {
+      Files.copy(inputStream, new File("tempFile.parquet").toPath());
+
       long start = System.currentTimeMillis();
       ParquetFileReader reader = ParquetFileReader.open(
-          HadoopInputFile.fromPath(new Path(filePath), new Configuration()));
+          HadoopInputFile.fromPath(new Path("tempFile.parquet"), new Configuration()));
       MessageType schema = reader.getFooter().getFileMetaData().getSchema();
 
       int serverIndex;
@@ -111,7 +114,6 @@ public class ParquetService {
       List<List<String>> file2 = new ArrayList<>();
       List<List<String>> file3 = new ArrayList<>();
 
-
       PageReadStore pages;
 
       MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
@@ -121,11 +123,11 @@ public class ParquetService {
 
       start = System.currentTimeMillis();
 
-      int batchSize = 5000;
-      //12000; 5 Thread 1 000 000 => 5.71 s
-      //45000 batchSize; 10 Thread pour 3 000 000 de lignes => 20 secondes
+      int batchSize = 20000;
+      // 12000; 5 Thread 1 000 000 => 5.71 s
+      // 45000 batchSize; 10 Thread pour 3 000 000 de lignes => 20 secondes
 
-      //Runtime.getRuntime().availableProcessors();
+      // Runtime.getRuntime().availableProcessors();
       while ((pages = reader.readNextRowGroup()) != null) {
 
         a++;
@@ -144,11 +146,11 @@ public class ParquetService {
             types = getTypesOfGroup(simpleGroup);
             columns = getFieldNames(simpleGroup);
 
-            //distributedService.insertColDistributed(tableName, columns, types);
+            // distributedService.insertColDistributed(tableName, columns, types);
             distributedService.createTableColDistributed(tableName, columns, types);
           }
 
-          if(i % 100 == 0) {
+          if (i % 100 == 0) {
             long endParse = System.currentTimeMillis();
             System.out.println((endParse - start) + " ms for " + i);
           }
@@ -159,42 +161,41 @@ public class ParquetService {
           }
 
           serverIndex = i % 3;
-          if(serverIndex == 0){
+          if (serverIndex == 0) {
             tableModificationService.insert(tableName, columns, values);
             continue;
           }
 
-          if(serverIndex == 1){
+          if (serverIndex == 1) {
             file2.add(values);
-            if(file2.size()>=batchSize){
+            if (file2.size() >= batchSize) {
               List<List<String>> tmp = file2;
               final List<String> finalColumns = columns;
               executor.submit(() -> sendBatch(tmp, 0, tableName, finalColumns));
-              file2=new ArrayList<>();
+              file2 = new ArrayList<>();
             }
             continue;
           }
 
-          if(serverIndex == 2){
+          if (serverIndex == 2) {
             file3.add(values);
-            if(file3.size()>=batchSize){
+            if (file3.size() >= batchSize) {
               List<List<String>> tmp = file3;
               final List<String> finalColumns = columns;
               executor.submit(() -> sendBatch(tmp, 1, tableName, finalColumns));
-              file3=new ArrayList<>();
+              file3 = new ArrayList<>();
             }
           }
         }
       }
 
-
-      if(!file2.isEmpty()){
+      if (!file2.isEmpty()) {
         final List<List<String>> finalFile = file2;
         final List<String> finalColumns = columns;
         executor.submit(() -> sendBatch(finalFile, 0, tableName, finalColumns));
       }
 
-      if(!file3.isEmpty()){
+      if (!file3.isEmpty()) {
         final List<List<String>> finalFile = file3;
         final List<String> finalColumns = columns;
         executor.submit(() -> sendBatch(finalFile, 1, tableName, finalColumns));
@@ -203,10 +204,21 @@ public class ParquetService {
       System.err.println(a + " " + b);
       reader.close();
 
-    } catch (
-
-    IOException e) {
+      return ResponseEntity.ok("File data has been successfully loaded to database.");
+    } catch (IOException e) {
       e.printStackTrace();
+
+      return ResponseEntity.badRequest().body("File cannot be loaded to database.");
+    } finally {
+      try {
+        if (inputStream != null) {
+          inputStream.close();
+        }
+
+        Files.delete(new File("tempFile.parquet").toPath());
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
   }
 
@@ -229,13 +241,11 @@ public class ParquetService {
     dataBatch.clear();
   }
 
-
-
   public void parseParquetFile1(String filePath, String tableName) {
     try {
       long start = System.currentTimeMillis();
       ParquetFileReader reader = ParquetFileReader.open(
-              HadoopInputFile.fromPath(new Path(filePath), new Configuration()));
+          HadoopInputFile.fromPath(new Path(filePath), new Configuration()));
       MessageType schema = reader.getFooter().getFileMetaData().getSchema();
 
       int serverIndex;
@@ -259,11 +269,11 @@ public class ParquetService {
       while ((pages = reader.readNextRowGroup()) != null) {
 
         a++;
-//        long rows = pages.getRowCount();
+        // long rows = pages.getRowCount();
 
         RecordReader recordReader = columnIO.getRecordReader(
-                pages,
-                new GroupRecordConverter(schema));
+            pages,
+            new GroupRecordConverter(schema));
 
         // TODO: replace random number with rows
         for (int i = 0; i < 800; i++) {
@@ -275,7 +285,7 @@ public class ParquetService {
 
             distributedService.createTableColDistributed(tableName, columns, types);
           }
-          if(i % 100 == 0) {
+          if (i % 100 == 0) {
             long endParse = System.currentTimeMillis();
             System.out.println((endParse - start) + " ms for " + i);
           }
@@ -285,15 +295,12 @@ public class ParquetService {
             values.add(getValueForField(simpleGroup, columns.get(j), j));
           }
 
-
-          //System.err.println("Time took for parsing " + (endParse - end1));
-
+          // System.err.println("Time took for parsing " + (endParse - end1));
 
           serverIndex = i % 3;
           distributedService.insertRowDistributed(tableName, columns, values, serverIndex);
 
-
-          //System.err.println("Time took for insert " + (endInsert - endParse));
+          // System.err.println("Time took for insert " + (endInsert - endParse));
 
           // if (serverIndex == 0) {
           // tableModificationService.insert(tableName, columns, values);
@@ -324,17 +331,13 @@ public class ParquetService {
       reader.close();
     } catch (
 
-            IOException e) {
+    IOException e) {
       e.printStackTrace();
     }
   }
 
   public String uploadFile(InputStream fileStream) throws IOException {
-    long st = System.currentTimeMillis();
     Files.copy(fileStream, new File("tempFile.parquet").toPath());
-
-    System.out.println("Copy file took " + (System.currentTimeMillis() - st));
-    // logger.info("...");
 
     return "tempFile.parquet";
   }
