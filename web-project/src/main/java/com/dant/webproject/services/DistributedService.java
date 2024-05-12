@@ -353,6 +353,8 @@ public class DistributedService {
     public Object agregationDistributed(AgregationType type, String nametable, String namecolumn, String groupByCol){
         String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
 
+
+
         // L'agrégation initiale est faite localement.
         Map<Object, Object> aggregatedResults = (Map<Object, Object>) agregationService.agregation(type, nametable, namecolumn, groupByCol);
 
@@ -390,6 +392,8 @@ public class DistributedService {
                                         aggregatedResults.put(key, value);
                                     }
                                     break;
+                                case AVG:
+                                    aggregatedResults.put(key, ((Double) existingValue + (Double) value)/2);
                             }
                         }
                     });

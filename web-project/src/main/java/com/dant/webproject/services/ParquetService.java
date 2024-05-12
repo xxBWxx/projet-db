@@ -138,7 +138,7 @@ public class ParquetService {
 
         // TODO: replace random number with rows
         SimpleGroup simpleGroup;
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 0; i < 10; i++) {
           simpleGroup = (SimpleGroup) recordReader.read();
           b++;
 
