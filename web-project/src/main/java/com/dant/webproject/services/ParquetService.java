@@ -96,7 +96,7 @@ public class ParquetService {
   }
 
   public ResponseEntity<String> parseParquetFile(InputStream inputStream, String tableName) {
-    ExecutorService executor = Executors.newFixedThreadPool(10); // Créer un pool de 2 threads
+    ExecutorService executor = Executors.newFixedThreadPool(3); // Créer un pool de 2 threads
     try {
       Files.copy(inputStream, new File("tempFile.parquet").toPath());
 
@@ -123,7 +123,7 @@ public class ParquetService {
 
       start = System.currentTimeMillis();
 
-      int batchSize = 20000;
+      int batchSize = 45000;
       // 12000; 5 Thread 1 000 000 => 5.71 s
       // 45000 batchSize; 10 Thread pour 3 000 000 de lignes => 20 secondes
 

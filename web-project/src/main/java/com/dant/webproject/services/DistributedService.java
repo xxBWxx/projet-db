@@ -358,10 +358,14 @@ public class DistributedService {
         // L'agrégation initiale est faite localement.
         Map<Object, Object> aggregatedResults = (Map<Object, Object>) agregationService.agregation(type, nametable, namecolumn, groupByCol);
 
+        aggregatedResults.forEach((key, value) -> {
+            System.out.println(key + ": " + value);
+        });
+
         for (String serverUrl : serverUrls) {
             try {
                 // Corrigez l'URL pour utiliser correctement les & pour séparer les paramètres
-                String url = serverUrl + "/agregation/selectFrom?type=" + type + "&nametable=" + nametable + "&namecolumn=" + namecolumn + "&groupByCol=" + groupByCol;
+                String url = serverUrl + "/agregation/selectFrom?agregationType=" + type + "&tableName=" + nametable + "&colName=" + namecolumn + "&groupByValues=" + groupByCol;
 
                 RestTemplate restTemplate = new RestTemplate();
                 ResponseEntity<Map<Object, Object>> response = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<Map<Object, Object>>() {});
@@ -373,8 +377,10 @@ public class DistributedService {
                     result.forEach((key, value) -> {
                         Object existingValue = aggregatedResults.get(key);
                         if (existingValue == null) {
+                            System.out.println(key);
                             aggregatedResults.put(key, value);
-                        } else {
+                        }
+                        else {
                             switch (type) {
                                 case SUM:
                                     aggregatedResults.put(key, (Integer) existingValue + (Integer) value);
