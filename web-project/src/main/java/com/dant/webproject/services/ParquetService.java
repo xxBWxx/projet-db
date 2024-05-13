@@ -96,11 +96,11 @@ public class ParquetService {
   }
 
   public ResponseEntity<String> parseParquetFile(InputStream inputStream, String tableName) {
-    ExecutorService executor = Executors.newFixedThreadPool(3); // Créer un pool de 2 threads
+    ExecutorService executor = Executors.newFixedThreadPool(10); // Créer un pool de 2 threads
     try {
       Files.copy(inputStream, new File("tempFile.parquet").toPath());
 
-      long start = System.currentTimeMillis();
+//      long start = System.currentTimeMillis();
       ParquetFileReader reader = ParquetFileReader.open(
           HadoopInputFile.fromPath(new Path("tempFile.parquet"), new Configuration()));
       MessageType schema = reader.getFooter().getFileMetaData().getSchema();
@@ -111,17 +111,18 @@ public class ParquetService {
       List<String> columns = null;
 
       List<String> values;
-      List<List<String>> file2 = new ArrayList<>();
-      List<List<String>> file3 = new ArrayList<>();
+      List<List<String>>[] files = new List[2];
+      files[0] = new ArrayList<>();
+      files[1] = new ArrayList<>();
 
       PageReadStore pages;
 
       MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
-      long end1 = System.currentTimeMillis();
-      System.err.println("Time took " + (end1 - start));
-      long a = 0, b = 0;
+//      long end1 = System.currentTimeMillis();
+//      System.err.println("Time took " + (end1 - start));
+//      long a = 0, b = 0;
 
-      start = System.currentTimeMillis();
+//      start = System.currentTimeMillis();
 
       int batchSize = 45000;
       // 12000; 5 Thread 1 000 000 => 5.71 s
@@ -130,7 +131,7 @@ public class ParquetService {
       // Runtime.getRuntime().availableProcessors();
       while ((pages = reader.readNextRowGroup()) != null) {
 
-        a++;
+//        a++;
 
         RecordReader recordReader = columnIO.getRecordReader(
             pages,
@@ -138,9 +139,9 @@ public class ParquetService {
 
         // TODO: replace random number with rows
         SimpleGroup simpleGroup;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 3000000; i++) {
           simpleGroup = (SimpleGroup) recordReader.read();
-          b++;
+//          b++;
 
           if (i == 0) {
             types = getTypesOfGroup(simpleGroup);
@@ -150,10 +151,10 @@ public class ParquetService {
             distributedService.createTableColDistributed(tableName, columns, types);
           }
 
-          if (i % 100 == 0) {
-            long endParse = System.currentTimeMillis();
-            System.out.println((endParse - start) + " ms for " + i);
-          }
+//          if (i % 100 == 0) {
+//            long endParse = System.currentTimeMillis();
+//            System.out.println((endParse - start) + " ms for " + i);
+//          }
 
           values = new ArrayList<>();
           for (int j = 0; j < columns.size(); j++) {
@@ -161,47 +162,57 @@ public class ParquetService {
           }
 
           serverIndex = i % 3;
+
           if (serverIndex == 0) {
             tableModificationService.insert(tableName, columns, values);
+            values.clear();
             continue;
           }
 
-          if (serverIndex == 1) {
-            file2.add(values);
-            if (file2.size() >= batchSize) {
-              List<List<String>> tmp = file2;
+          files[serverIndex-1].add(values);
+          if (files[serverIndex-1].size() >= batchSize) {
+              List<List<String>> tmp = files[serverIndex-1];
               final List<String> finalColumns = columns;
-              executor.submit(() -> sendBatch(tmp, 0, tableName, finalColumns));
-              file2 = new ArrayList<>();
-            }
-            continue;
+              final int s = serverIndex-1;
+              executor.submit(() -> sendBatch(tmp, s, tableName, finalColumns));
+              files[serverIndex-1] = new ArrayList<>();
           }
 
-          if (serverIndex == 2) {
-            file3.add(values);
-            if (file3.size() >= batchSize) {
-              List<List<String>> tmp = file3;
-              final List<String> finalColumns = columns;
-              executor.submit(() -> sendBatch(tmp, 1, tableName, finalColumns));
-              file3 = new ArrayList<>();
-            }
-          }
+//          if (serverIndex == 1) {
+//            file2.add(values);
+//            if (file2.size() >= batchSize) {
+//              List<List<String>> tmp = file2;
+//              final List<String> finalColumns = columns;
+//              executor.submit(() -> sendBatch(tmp, 0, tableName, finalColumns));
+//              file2 = new ArrayList<>();
+//            }
+//            continue;
+//          }
+//
+//          if (serverIndex == 2) {
+//            file3.add(values);
+//            if (file3.size() >= batchSize) {
+//              List<List<String>> tmp = file3;
+//              final List<String> finalColumns = columns;
+//              executor.submit(() -> sendBatch(tmp, 1, tableName, finalColumns));
+//              file3 = new ArrayList<>();
+//            }
+//          }
         }
       }
 
-      if (!file2.isEmpty()) {
-        final List<List<String>> finalFile = file2;
-        final List<String> finalColumns = columns;
+      final List<String> finalColumns = columns;
+      if (!files[0].isEmpty()) {
+        final List<List<String>> finalFile = files[0];
         executor.submit(() -> sendBatch(finalFile, 0, tableName, finalColumns));
       }
 
-      if (!file3.isEmpty()) {
-        final List<List<String>> finalFile = file3;
-        final List<String> finalColumns = columns;
+      if (!files[1].isEmpty()) {
+        final List<List<String>> finalFile = files[1];
         executor.submit(() -> sendBatch(finalFile, 1, tableName, finalColumns));
       }
 
-      System.err.println(a + " " + b);
+//      System.err.println(a + " " + b);
       reader.close();
 
       return ResponseEntity.ok("File data has been successfully loaded to database.");
