@@ -1,5 +1,6 @@
 package com.dant.webproject.services;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +68,23 @@ public class AgregationService {
         }
 
         return res;
+
     }
+
+//    public List<Map<String, Object>> sum(Column column, Column groupBy) {
+//
+//        Map<Object, Number> res = sumTmp(column, groupBy);
+//        List<Map<String, Object>> outputList = new ArrayList<>();
+//
+//        for (Map.Entry<Object, Number> entry : res.entrySet()) {
+//            Map<String, Object> map = new HashMap<>();
+//            map.put(groupBy.getName(), entry.getKey());
+//            map.put("SUM("+column.getName()+")", entry.getValue());
+//            outputList.add(map);
+//        }
+//
+//        return outputList;
+//    }
 
     public Map<Object, Object> max(Column c, Column groupBy) {
 
@@ -75,6 +92,8 @@ public class AgregationService {
         List<Object> valuesGroupBy = groupBy.getValues();
         Map<Object, Object> res = new HashMap<>();
 
+        System.out.println(values.size());
+        System.out.println(valuesGroupBy.size());
         for (int i = 0; i < values.size(); i++) {
             Object groupByKey = valuesGroupBy.get(i);
             Object currentValue = values.get(i);

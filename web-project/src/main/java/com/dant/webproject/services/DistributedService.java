@@ -150,6 +150,7 @@ public class DistributedService {
             requestBody.put("columns", colNames);
             requestBody.put("where", conditions);
 
+
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
             // Construire l'URL pour le point de terminaison d'insertion
@@ -351,16 +352,11 @@ public class DistributedService {
     }
 
     public Object agregationDistributed(AgregationType type, String nametable, String namecolumn, String groupByCol){
-        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-
-
+        String[] serverUrls = { "http://localhost:8080", "http://localhost:8081", "http://localhost:8082" };
 
         // L'agrégation initiale est faite localement.
-        Map<Object, Object> aggregatedResults = (Map<Object, Object>) agregationService.agregation(type, nametable, namecolumn, groupByCol);
-
-        aggregatedResults.forEach((key, value) -> {
-            System.out.println(key + ": " + value);
-        });
+        //Map<Object, Object> aggregatedResults = (Map<Object, Object>) agregationService.agregation(type, nametable, namecolumn, groupByCol);
+        Map<Object, Object> aggregatedResults = new HashMap<>();
 
         for (String serverUrl : serverUrls) {
             try {

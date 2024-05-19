@@ -8,8 +8,7 @@ import java.io.StringReader;
 import java.lang.management.MemoryManagerMXBean;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 import com.dant.webproject.dbcomponents.Column;
 import org.apache.hadoop.conf.Configuration;
@@ -95,12 +94,17 @@ public class ParquetService {
     return res;
   }
 
-  public ResponseEntity<String> parseParquetFile(InputStream inputStream, String tableName) {
-    ExecutorService executor = Executors.newFixedThreadPool(10); // Créer un pool de 2 threads
+  public void parseParquetFile(InputStream inputStream, String tableName) {
+    //ExecutorService executor = Executors.newFixedThreadPool(10); // Créer un pool de 2 threads
+    ExecutorService executor = new ThreadPoolExecutor(
+            5, 40,
+            0L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<Runnable>()
+    );
     try {
       Files.copy(inputStream, new File("tempFile.parquet").toPath());
 
-//      long start = System.currentTimeMillis();
+      long start = System.currentTimeMillis();
       ParquetFileReader reader = ParquetFileReader.open(
           HadoopInputFile.fromPath(new Path("tempFile.parquet"), new Configuration()));
       MessageType schema = reader.getFooter().getFileMetaData().getSchema();
@@ -118,20 +122,20 @@ public class ParquetService {
       PageReadStore pages;
 
       MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
-//      long end1 = System.currentTimeMillis();
-//      System.err.println("Time took " + (end1 - start));
-//      long a = 0, b = 0;
+      long end1 = System.currentTimeMillis();
+      System.err.println("Time took " + (end1 - start));
+      long a = 0, b = 0;
 
-//      start = System.currentTimeMillis();
+      start = System.currentTimeMillis();
 
-      int batchSize = 45000;
+      int batchSize = 12000;
       // 12000; 5 Thread 1 000 000 => 5.71 s
       // 45000 batchSize; 10 Thread pour 3 000 000 de lignes => 20 secondes
 
       // Runtime.getRuntime().availableProcessors();
       while ((pages = reader.readNextRowGroup()) != null) {
 
-//        a++;
+        a++;
 
         RecordReader recordReader = columnIO.getRecordReader(
             pages,
@@ -139,9 +143,9 @@ public class ParquetService {
 
         // TODO: replace random number with rows
         SimpleGroup simpleGroup;
-        for (int i = 0; i < 3000000; i++) {
+        for (int i = 0; i < 1000000; i++) {
           simpleGroup = (SimpleGroup) recordReader.read();
-//          b++;
+          b++;
 
           if (i == 0) {
             types = getTypesOfGroup(simpleGroup);
@@ -151,10 +155,10 @@ public class ParquetService {
             distributedService.createTableColDistributed(tableName, columns, types);
           }
 
-//          if (i % 100 == 0) {
-//            long endParse = System.currentTimeMillis();
-//            System.out.println((endParse - start) + " ms for " + i);
-//          }
+          if (i % 100 == 0) {
+            long endParse = System.currentTimeMillis();
+            System.out.println((endParse - start) + " ms for " + i);
+          }
 
           values = new ArrayList<>();
           for (int j = 0; j < columns.size(); j++) {
@@ -212,21 +216,32 @@ public class ParquetService {
         executor.submit(() -> sendBatch(finalFile, 1, tableName, finalColumns));
       }
 
-//      System.err.println(a + " " + b);
+      System.err.println(a + " " + b);
       reader.close();
+      executor.shutdown();
 
-      return ResponseEntity.ok("File data has been successfully loaded to database.");
+      try {
+        if (!executor.awaitTermination(60, TimeUnit.MINUTES)) {
+          executor.shutdownNow();
+          if (!executor.awaitTermination(60, TimeUnit.SECONDS))
+            System.err.println("Executor did not terminate");
+        }
+      } catch (InterruptedException ie) {
+        executor.shutdownNow();
+        Thread.currentThread().interrupt();
+      }
+
+      System.out.println("File data has been successfully loaded to database.");
     } catch (IOException e) {
       e.printStackTrace();
 
-      return ResponseEntity.badRequest().body("File cannot be loaded to database.");
+      System.out.println("File cannot be loaded to database.");
     } finally {
       try {
         if (inputStream != null) {
           inputStream.close();
         }
 
-        Files.delete(new File("tempFile.parquet").toPath());
       } catch (IOException e) {
         e.printStackTrace();
       }
