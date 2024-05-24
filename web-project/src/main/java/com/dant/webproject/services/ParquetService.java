@@ -249,7 +249,9 @@ public class ParquetService {
   }
 
   private void sendBatch(List<List<String>> dataBatch, int serverIndex, String tableName, List<String> columns) {
-    String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+    //String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+    String[] serverUrls = { "http://132.227.125.25:8081", "http://132.227.124.41:8082" };
+
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
