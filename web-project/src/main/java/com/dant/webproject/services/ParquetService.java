@@ -95,12 +95,12 @@ public class ParquetService {
   }
 
   public void parseParquetFile(InputStream inputStream, String tableName) {
-    //ExecutorService executor = Executors.newFixedThreadPool(10); // Créer un pool de 2 threads
+    // ExecutorService executor = Executors.newFixedThreadPool(10); // Créer un pool
+    // de 2 threads
     ExecutorService executor = new ThreadPoolExecutor(
-            5, 40,
-            0L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<Runnable>()
-    );
+        5, 40,
+        0L, TimeUnit.MILLISECONDS,
+        new LinkedBlockingQueue<Runnable>());
     try {
       Files.copy(inputStream, new File("tempFile.parquet").toPath());
 
@@ -173,35 +173,35 @@ public class ParquetService {
             continue;
           }
 
-          files[serverIndex-1].add(values);
-          if (files[serverIndex-1].size() >= batchSize) {
-              List<List<String>> tmp = files[serverIndex-1];
-              final List<String> finalColumns = columns;
-              final int s = serverIndex-1;
-              executor.submit(() -> sendBatch(tmp, s, tableName, finalColumns));
-              files[serverIndex-1] = new ArrayList<>();
+          files[serverIndex - 1].add(values);
+          if (files[serverIndex - 1].size() >= batchSize) {
+            List<List<String>> tmp = files[serverIndex - 1];
+            final List<String> finalColumns = columns;
+            final int s = serverIndex - 1;
+            executor.submit(() -> sendBatch(tmp, s, tableName, finalColumns));
+            files[serverIndex - 1] = new ArrayList<>();
           }
 
-//          if (serverIndex == 1) {
-//            file2.add(values);
-//            if (file2.size() >= batchSize) {
-//              List<List<String>> tmp = file2;
-//              final List<String> finalColumns = columns;
-//              executor.submit(() -> sendBatch(tmp, 0, tableName, finalColumns));
-//              file2 = new ArrayList<>();
-//            }
-//            continue;
-//          }
-//
-//          if (serverIndex == 2) {
-//            file3.add(values);
-//            if (file3.size() >= batchSize) {
-//              List<List<String>> tmp = file3;
-//              final List<String> finalColumns = columns;
-//              executor.submit(() -> sendBatch(tmp, 1, tableName, finalColumns));
-//              file3 = new ArrayList<>();
-//            }
-//          }
+          // if (serverIndex == 1) {
+          // file2.add(values);
+          // if (file2.size() >= batchSize) {
+          // List<List<String>> tmp = file2;
+          // final List<String> finalColumns = columns;
+          // executor.submit(() -> sendBatch(tmp, 0, tableName, finalColumns));
+          // file2 = new ArrayList<>();
+          // }
+          // continue;
+          // }
+          //
+          // if (serverIndex == 2) {
+          // file3.add(values);
+          // if (file3.size() >= batchSize) {
+          // List<List<String>> tmp = file3;
+          // final List<String> finalColumns = columns;
+          // executor.submit(() -> sendBatch(tmp, 1, tableName, finalColumns));
+          // file3 = new ArrayList<>();
+          // }
+          // }
         }
       }
 
@@ -249,9 +249,8 @@ public class ParquetService {
   }
 
   private void sendBatch(List<List<String>> dataBatch, int serverIndex, String tableName, List<String> columns) {
-    //String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-    String[] serverUrls = { "http://132.227.125.25:8081", "http://132.227.124.41:8082" };
-
+    // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+    String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
@@ -378,6 +377,8 @@ public class ParquetService {
     List<DataType> res = new ArrayList<>();
 
     String groupStr = simpleGroup.getType().toString().replace("ı", "i");
+
+    System.out.println(groupStr);
 
     try (BufferedReader reader = new BufferedReader(new StringReader(groupStr))) {
       String previousLine = null;
