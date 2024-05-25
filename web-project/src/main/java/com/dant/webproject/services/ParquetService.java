@@ -173,7 +173,7 @@ public class ParquetService {
 
 
   public void parseParquetFile(InputStream inputStream, String tableName) {
-    ExecutorService executor = Executors.newFixedThreadPool(5);
+    ExecutorService executor = Executors.newFixedThreadPool(3);
     List<Future<?>> futures = new ArrayList<>();
 
     try (BoundedInputStream boundedInputStream = new BoundedInputStream(inputStream)) {
@@ -496,7 +496,7 @@ public class ParquetService {
     dataBatch.clear();
   }
 
-  public void parseParquetFile1(String filePath, String tableName) {
+  public void parseParquetFile2(String filePath, String tableName) {
     try {
       long start = System.currentTimeMillis();
       ParquetFileReader reader = ParquetFileReader.open(

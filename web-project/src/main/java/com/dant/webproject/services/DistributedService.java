@@ -90,8 +90,8 @@ public class DistributedService {
 
     public void createTableDistributed(String tableName) {
         databaseManagementService.createTable(tableName);
-        // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
+        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+        //String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
 
         // Appel du point de terminaison sur chaque serveur
         for (String serverUrl : serverUrls) {
