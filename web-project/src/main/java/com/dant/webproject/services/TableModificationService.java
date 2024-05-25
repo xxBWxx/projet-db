@@ -5,6 +5,7 @@ import com.dant.webproject.dbcomponents.DataType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,13 @@ public class TableModificationService implements ISelectService {
         Column column = table.get(columnName);
 
         column.addValue(value);
+    }
+
+    public void addColumn(String tableName ,List<String> columns, List<DataType> type){
+        Map<String, Column> table = new LinkedHashMap<>();
+        for (int i = 0; i < columns.size(); i++)
+            table.put(columns.get(i), new Column(columns.get(i), type.get(i)));
+        databaseManagementService.getDatabase().put(tableName, table);
     }
 
     public void insertMult(String table, List<String> col_name, List<List<String>> value) {
