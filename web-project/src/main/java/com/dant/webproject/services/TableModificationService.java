@@ -5,6 +5,9 @@ import com.dant.webproject.dbcomponents.DataType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,8 +109,7 @@ public class TableModificationService implements ISelectService {
     }
 
     // mettre à jour une colonne donnée
-    public void updateColumn(String tableName, String columnName, String newData, String conditionColumn,
-            Object conditionValue) {
+    public void updateColumn(String tableName, String columnName, String newData, String conditionColumn, Object conditionValue) {
         if (databaseManagementService.getDatabase().get(tableName) == null) {
             throw new IllegalArgumentException(
                     "La table " + tableName + " n'existe pas dans la base de donnees");
@@ -120,14 +122,71 @@ public class TableModificationService implements ISelectService {
         }
 
         List<Object> columnData = table.get(columnName).getValues();
+        DataType type = table.get(columnName).getType();
         List<Object> conditionColumnData = table.get(conditionColumn).getValues();
 
         // Parcourir les données de la colonne à mettre à jour
         for (int i = 0; i < columnData.size(); i++) {
             // Vérifier si la condition est satisfaite
             if (compareValues(conditionColumnData.get(i), conditionValue, table.get(conditionColumn).getType()) == 0) {
-                columnData.set(i, newData);
+                Object castedData = castData(newData, type);
+                columnData.set(i, castedData);
             }
         }
     }
+
+    private Object castData(String newData, DataType type) {
+        switch (type) {
+            case STRING:
+                return newData;
+            case INTEGER:
+                return Integer.parseInt(newData);
+            case DOUBLE:
+                return Double.parseDouble(newData);
+            case DATETIME_STRING:
+                return formatTimestamp(newData);
+            // Ajoutez d'autres types de données si nécessaire
+            default:
+                throw new IllegalArgumentException("Type de donnée non supporté : " + type);
+        }
+    }
+
+    private String formatTimestamp(String timestamp) {
+        long microseconds = Long.parseLong(timestamp);
+        long milliseconds = microseconds / 1000;
+
+        Instant instant = Instant.ofEpochMilli(milliseconds);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        return formatter.format(instant.atZone(ZoneId.of("America/New_York")));
+    }
+
+    public void deleteRow(String tableName, String conditionColumn, Object conditionValue) {
+        if (databaseManagementService.getDatabase().get(tableName) == null) {
+            throw new IllegalArgumentException(
+                    "La table " + tableName + " n'existe pas dans la base de donnees");
+        }
+
+        Map<String, Column> table = databaseManagementService.getDatabase().get(tableName);
+        if (!table.containsKey(conditionColumn)) {
+            throw new IllegalArgumentException(
+                    "La colonne " + conditionColumn + " n'existe pas dans la table " + tableName);
+        }
+
+        List<Object> conditionColumnData = table.get(conditionColumn).getValues();
+        DataType conditionColumnType = table.get(conditionColumn).getType();
+
+        // Parcourir les données de la colonne à mettre à jour
+        for (int i = conditionColumnData.size() - 1; i >= 0; i--) {
+            // Vérifier si la condition est satisfaite
+            if (compareValues(conditionColumnData.get(i), conditionValue, conditionColumnType) == 0) {
+                // Supprimer la ligne i de chaque colonne
+                for (Column column : table.values()) {
+                    column.getValues().remove(i);
+                }
+            }
+        }
+    }
+
 }

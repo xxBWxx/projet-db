@@ -216,15 +216,16 @@ public class ParquetService {
 
       start = System.currentTimeMillis();
       int batchSize = 12000;
-
+      int serverIndex=0;
+      RecordReader<Group> recordReader;
       while ((pages = reader.readNextRowGroup()) != null) {
         a++;
 
-        RecordReader<Group> recordReader = columnIO.getRecordReader(
-                pages, new GroupRecordConverter(schema));
+        recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema));
 
-        for (int i = 0; i < 1000000; i++) {
-          SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
+        SimpleGroup simpleGroup;
+        for (int i = 0; i < 100; i++) {
+          simpleGroup = (SimpleGroup) recordReader.read();
           b++;
 
           if (i == 0) {
@@ -243,7 +244,7 @@ public class ParquetService {
             values.add(getValueForField(simpleGroup, columns.get(j), j));
           }
 
-          int serverIndex = i % 3;
+          serverIndex = i % 3;
 
           if (serverIndex == 0) {
             tableModificationService.insert(tableName, columns, values);
@@ -326,7 +327,7 @@ public class ParquetService {
   public void parseParquetFile1(InputStream inputStream, String tableName) {
     //ExecutorService executor = Executors.newFixedThreadPool(10); // Créer un pool de 2 threads
     ExecutorService executor = new ThreadPoolExecutor(
-            15, 15,
+            5, 5,
             0L, TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<Runnable>()
     );
@@ -357,7 +358,7 @@ public class ParquetService {
 
       start = System.currentTimeMillis();
 
-      int batchSize = 45000;
+      int batchSize = 12000;
       // 12000; 5 Thread 1 000 000 => 5.71 s
       // 45000 batchSize; 10 Thread pour 3 000 000 de lignes => 20 secondes
 
@@ -372,7 +373,7 @@ public class ParquetService {
 
         // TODO: replace random number with rows
         SimpleGroup simpleGroup;
-        for (int i = 0; i < 4000000; i++) {
+        for (int i = 0; i < 1000000; i++) {
           simpleGroup = (SimpleGroup) recordReader.read();
           b++;
 

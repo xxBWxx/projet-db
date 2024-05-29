@@ -41,6 +41,11 @@ public class TableModificationDistributedController {
         distributedService.updateColumnDistributed(tableName, columnName, newData, conditionColumn, conditionValue);
     }
 
+    @PostMapping("/deleteRow")
+    public void delete_row(@RequestParam String tableName, @RequestParam String conditionColumn, @RequestParam Object conditionValue) {
+        distributedService.deleteRowDistributed(tableName, conditionColumn, conditionValue);
+    }
+
     @PostMapping("/addColumn")
     public void addColumn(@RequestParam String tableName,
                                                  @RequestBody Map<String, Object> requestData) {

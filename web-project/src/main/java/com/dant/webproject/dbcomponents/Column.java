@@ -13,25 +13,9 @@ public class Column {
     public Column(String name, DataType type) {
         this.name = name;
         this.type = type;
-        switch (type) {
-            case INTEGER:
-                this.values = new ArrayList<>();
-                break;
-
-            case STRING:
-                this.values = new ArrayList<>();
-                break;
-
-            case DOUBLE:
-                this.values = new ArrayList<>();
-                break;
-
-            case DATETIME_STRING:
-                this.values = new ArrayList<>();
-                break;
-
-            default:
-                throw new IllegalArgumentException("Unsupported column type: " + type);
+        values = new ArrayList<>();
+        if (!EnumSet.allOf(DataType.class).contains(type)) {
+            throw new IllegalArgumentException("Unsupported column type: " + type);
         }
     }
 
