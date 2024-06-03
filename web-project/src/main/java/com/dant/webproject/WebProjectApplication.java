@@ -6,8 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
-import com.dant.webproject.services.DatabaseService;
-
 @SpringBootApplication
 public class WebProjectApplication {
 
@@ -17,7 +15,6 @@ public class WebProjectApplication {
 
   @Bean
   CommandLineRunner commandLineRunner(
-      DatabaseService databaseService,
       Environment env) {
     return args -> {
 

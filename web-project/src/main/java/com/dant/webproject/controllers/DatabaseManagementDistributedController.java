@@ -20,8 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dant.webproject.services.DatabaseService;
-
 @RestController
 @RequestMapping("/databaseManagementDistributed")
 public class DatabaseManagementDistributedController {
