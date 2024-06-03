@@ -18,7 +18,7 @@ public class AgregationController {
     @Autowired
     private AgregationService agregationService;
 
-    @GetMapping("/selectFrom")
+    @GetMapping("/groupBy")
     public Object selectFrom(@RequestParam String tableName, @RequestParam String agregationType,
             @RequestParam String colName, @RequestParam String groupByValues) {
         return agregationService.agregation(AgregationType.valueOf(agregationType), tableName, colName, groupByValues);
