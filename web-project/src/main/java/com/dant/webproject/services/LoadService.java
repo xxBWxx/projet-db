@@ -19,8 +19,9 @@ public class LoadService implements ILoadService {
     this.parquetService = parquetService;
   }
 
-  public void loadFileToTable(HttpServletRequest request, String tableName) throws IOException {
+  public ResponseEntity<String> loadFileToTable(HttpServletRequest request, String tableName) throws IOException {
     InputStream inputStream = request.getInputStream();
-    parquetService.parseParquetFile(inputStream, tableName);
+
+    return parquetService.parseParquetFile(inputStream, tableName);
   }
 }

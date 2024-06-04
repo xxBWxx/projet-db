@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.dant.webproject.dbcomponents.DataType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dant.webproject.dbcomponents.DataType;
 import com.dant.webproject.services.TableModificationService;
 
 @RestController
@@ -21,6 +21,7 @@ public class TableModificationController {
     @Autowired
     private TableModificationService tableModificationService;
 
+    @SuppressWarnings("unchecked")
     @PostMapping("/insertMult")
     public void insertMult(@RequestParam String table, @RequestBody Map<String, Object> requestData) {
         List<String> col_name = (List<String>) (requestData.get("col_name"));
@@ -42,10 +43,12 @@ public class TableModificationController {
     }
 
     @PostMapping("/deleteRow")
-    public void delete_row(@RequestParam String tableName, @RequestParam String conditionColumn, @RequestParam Object conditionValue) {
+    public void delete_row(@RequestParam String tableName, @RequestParam String conditionColumn,
+            @RequestParam Object conditionValue) {
         tableModificationService.deleteRow(tableName, conditionColumn, conditionValue);
     }
 
+    @SuppressWarnings("unchecked")
     @PostMapping("/addColumn")
     public void addColumn(@RequestParam String tableName, @RequestBody Map<String, Object> requestData) {
         List<String> col_name = (List<String>) (requestData.get("col_name"));

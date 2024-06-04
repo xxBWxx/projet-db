@@ -3,6 +3,8 @@ package com.dant.webproject.services;
 import com.dant.webproject.dbcomponents.Column;
 import com.dant.webproject.dbcomponents.DataType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -42,7 +44,7 @@ public class TableModificationService implements ISelectService {
         column.addValue(value);
     }
 
-    public void addColumn(String tableName ,List<String> columns, List<DataType> type){
+    public void addColumn(String tableName, List<String> columns, List<DataType> type) {
         Map<String, Column> table = new LinkedHashMap<>();
         for (int i = 0; i < columns.size(); i++)
             table.put(columns.get(i), new Column(columns.get(i), type.get(i)));
@@ -109,16 +111,18 @@ public class TableModificationService implements ISelectService {
     }
 
     // mettre à jour une colonne donnée
-    public void updateColumn(String tableName, String columnName, String newData, String conditionColumn, Object conditionValue) {
+    public ResponseEntity<String> updateColumn(String tableName, String columnName, String newData,
+            String conditionColumn,
+            Object conditionValue) {
         if (databaseManagementService.getDatabase().get(tableName) == null) {
-            throw new IllegalArgumentException(
-                    "La table " + tableName + " n'existe pas dans la base de donnees");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Table " + tableName + " does not exist in the database.");
         }
 
         Map<String, Column> table = databaseManagementService.getDatabase().get(tableName);
         if (!table.containsKey(columnName)) {
-            throw new IllegalArgumentException(
-                    "La colonne " + columnName + " n'existe pas dans la table " + tableName);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Column " + columnName + " does not exist.");
         }
 
         List<Object> columnData = table.get(columnName).getValues();
@@ -133,6 +137,9 @@ public class TableModificationService implements ISelectService {
                 columnData.set(i, castedData);
             }
         }
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body("Table " + tableName + " updated successfully.");
     }
 
     private Object castData(String newData, DataType type) {
@@ -162,16 +169,16 @@ public class TableModificationService implements ISelectService {
         return formatter.format(instant.atZone(ZoneId.of("America/New_York")));
     }
 
-    public void deleteRow(String tableName, String conditionColumn, Object conditionValue) {
+    public ResponseEntity<String> deleteRow(String tableName, String conditionColumn, Object conditionValue) {
         if (databaseManagementService.getDatabase().get(tableName) == null) {
-            throw new IllegalArgumentException(
-                    "La table " + tableName + " n'existe pas dans la base de donnees");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Table " + tableName + " does not exist in the database.");
         }
 
         Map<String, Column> table = databaseManagementService.getDatabase().get(tableName);
         if (!table.containsKey(conditionColumn)) {
-            throw new IllegalArgumentException(
-                    "La colonne " + conditionColumn + " n'existe pas dans la table " + tableName);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Column " + conditionColumn + " does not exist.");
         }
 
         List<Object> conditionColumnData = table.get(conditionColumn).getValues();
@@ -187,6 +194,9 @@ public class TableModificationService implements ISelectService {
                 }
             }
         }
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body("Deleted row successfully.");
     }
 
 }

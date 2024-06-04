@@ -5,11 +5,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.dant.webproject.dbcomponents.DataType;
 import com.dant.webproject.services.DatabaseManagementService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 
+@SuppressWarnings("unchecked")
 @RestController
 @RequestMapping("/databaseManagement")
 public class DatabaseManagementController {
@@ -24,9 +32,10 @@ public class DatabaseManagementController {
         databaseManagementService.createTableCol(tableName, col_name, typeList);
     }
 
+    @SuppressWarnings("rawtypes")
     @PostMapping("/createTable")
-    public void createTable(@RequestParam String tableName) {
-        databaseManagementService.createTable(tableName);
+    public ResponseEntity createTable(@RequestParam String tableName) {
+        return databaseManagementService.createTable(tableName);
     }
 
     @GetMapping("/showTables")
@@ -44,12 +53,11 @@ public class DatabaseManagementController {
         return databaseManagementService.describeTable(tableName);
     }
 
-
     @PostMapping("/alterTable")
-    public void alterTable(String tableName, String columnName, String typeData) {
+    public ResponseEntity<String> alterTable(String tableName, String columnName, String typeData) {
         DataType type = DataType.valueOf(typeData);
-        databaseManagementService.alterTable(tableName, columnName, type);
-    }
 
+        return databaseManagementService.alterTable(tableName, columnName, type);
+    }
 
 }

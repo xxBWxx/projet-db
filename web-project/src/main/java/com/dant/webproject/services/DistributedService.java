@@ -1,17 +1,22 @@
 package com.dant.webproject.services;
 
-import com.dant.webproject.dbcomponents.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
-import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.core.ParameterizedTypeReference;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import com.dant.webproject.dbcomponents.AgregationType;
+import com.dant.webproject.dbcomponents.DataType;
 
 @Component
 public class DistributedService {
@@ -22,19 +27,16 @@ public class DistributedService {
     private final DatabaseManagementService databaseManagementService;
     @Autowired
     private final TableModificationService tableModificationService;
-    @Autowired
-    private final AgregationService agregationService;
 
     @Autowired
     private RestTemplate restTemplate;
 
     @Autowired
     public DistributedService(SelectService selectService, DatabaseManagementService databaseManagementService,
-            TableModificationService tableModificationService, AgregationService agregationService) {
+            TableModificationService tableModificationService) {
         this.selectService = selectService;
         this.databaseManagementService = databaseManagementService;
         this.tableModificationService = tableModificationService;
-        this.agregationService = agregationService;
     }
 
     public void createTableColDistributed(String tableName, List<String> columns, List<DataType> types) {
@@ -43,7 +45,8 @@ public class DistributedService {
 
         databaseManagementService.createTableCol(tableName, columns, types);
         String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        //String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://132.227.115.111:8081",
+        // "http://132.227.115.119:8082" };
 
         // Headers pour la requête HTTP
         HttpHeaders headers = new HttpHeaders();
@@ -69,7 +72,8 @@ public class DistributedService {
 
         tableModificationService.addColumn(tableName, columns, types);
         String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        //String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://132.227.115.111:8081",
+        // "http://132.227.115.119:8082" };
 
         // Headers pour la requête HTTP
         HttpHeaders headers = new HttpHeaders();
@@ -89,22 +93,29 @@ public class DistributedService {
         }
     }
 
-    public void createTableDistributed(String tableName) {
-        databaseManagementService.createTable(tableName);
+    @SuppressWarnings("rawtypes")
+    public ResponseEntity createTableDistributed(String tableName) {
+        ResponseEntity response = databaseManagementService.createTable(tableName);
         String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        //String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://132.227.115.111:8081",
+        // "http://132.227.115.119:8082" };
 
         // Appel du point de terminaison sur chaque serveur
-        for (String serverUrl : serverUrls) {
-            String createTableUrl = serverUrl + "/databaseManagement/createTable?tableName=" + tableName;
-            restTemplate.exchange(createTableUrl, HttpMethod.POST, null, Void.class);
+        if (response.getStatusCode() == HttpStatus.CREATED) {
+            for (String serverUrl : serverUrls) {
+                String createTableUrl = serverUrl + "/databaseManagement/createTable?tableName=" + tableName;
+                restTemplate.exchange(createTableUrl, HttpMethod.POST, null, Void.class);
+            }
         }
+
+        return response;
     }
 
     public void insertDistributed(String tableName, List<String> columns, List<List<String>> valuesList) {
         int cpt = 0;
         String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        //String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://132.227.115.111:8081",
+        // "http://132.227.115.119:8082" };
 
         if (valuesList.size() == 1) {
             tableModificationService.insert(tableName, columns, valuesList.get(0));
@@ -140,7 +151,8 @@ public class DistributedService {
 
     public void insertRowDistributed(String tableName, List<String> columns, List<String> value, int modulo) {
         String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        //String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://132.227.115.111:8081",
+        // "http://132.227.115.119:8082" };
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -169,7 +181,8 @@ public class DistributedService {
 
         List<Map<String, Object>> res = selectService.select(tableName, colNames, conditions);
         String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        //String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://132.227.115.111:8081",
+        // "http://132.227.115.119:8082" };
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -199,53 +212,71 @@ public class DistributedService {
         tableModificationService.insertMult(tableName, col, value);
     }
 
-    public void updateColumnDistributed(String tableName, String columnName, String newData, String conditionColumn,
+    @SuppressWarnings("rawtypes")
+    public ResponseEntity updateColumnDistributed(String tableName, String columnName, String newData,
+            String conditionColumn,
             Object conditionValue) {
         String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        //String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://132.227.115.111:8081",
+        // "http://132.227.115.119:8082" };
 
-        tableModificationService.updateColumn(tableName, columnName, newData, conditionColumn, conditionValue);
-        for (String serverUrl : serverUrls) {
-            try {
-                String url = serverUrl + "/tableModification/updateCol?tableName=" + tableName
-                        + "&columnName=" + columnName
-                        + "&newData=" + newData
-                        + "&conditionColumn=" + conditionColumn
-                        + "&conditionValue=" + conditionValue;
+        ResponseEntity response = tableModificationService.updateColumn(tableName, columnName, newData, conditionColumn,
+                conditionValue);
 
-                restTemplate.exchange(url, HttpMethod.POST, null, Void.class);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            for (String serverUrl : serverUrls) {
+                try {
+                    String url = serverUrl + "/tableModification/updateCol?tableName=" + tableName
+                            + "&columnName=" + columnName
+                            + "&newData=" + newData
+                            + "&conditionColumn=" + conditionColumn
+                            + "&conditionValue=" + conditionValue;
 
-            } catch (Exception e) {
-                e.printStackTrace(); // Handle exception or log it
+                    restTemplate.exchange(url, HttpMethod.POST, null, Void.class);
+
+                } catch (Exception e) {
+                    e.printStackTrace(); // Handle exception or log it
+                }
             }
         }
+
+        return response;
     }
 
-    public void deleteRowDistributed(String tableName, String conditionColumn,
+    @SuppressWarnings("rawtypes")
+    public ResponseEntity deleteRowDistributed(String tableName, String conditionColumn,
             Object conditionValue) {
         String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        //String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://132.227.115.111:8081",
+        // "http://132.227.115.119:8082" };
 
-        tableModificationService.deleteRow(tableName, conditionColumn, conditionValue);
-        for (String serverUrl : serverUrls) {
-            try {
-                String url = serverUrl + "/tableModification/deleteRow?tableName=" + tableName
-                        + "&conditionColumn=" + conditionColumn
-                        + "&conditionValue=" + conditionValue;
+        ResponseEntity response = tableModificationService.deleteRow(tableName, conditionColumn, conditionValue);
 
-                restTemplate.exchange(url, HttpMethod.POST, null, Void.class);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            for (String serverUrl : serverUrls) {
+                try {
+                    String url = serverUrl + "/tableModification/deleteRow?tableName=" + tableName
+                            + "&conditionColumn=" + conditionColumn
+                            + "&conditionValue=" + conditionValue;
 
-            } catch (Exception e) {
-                e.printStackTrace(); // Handle exception or log it
+                    restTemplate.exchange(url, HttpMethod.POST, null, Void.class);
+
+                } catch (Exception e) {
+                    e.printStackTrace(); // Handle exception or log it
+                }
             }
         }
+
+        return response;
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public Object agregationDistributed(AgregationType type, String nametable, String namecolumn, String groupByCol) {
         String[] serverUrls = { "http://localhost:8080", "http://localhost:8081",
-        "http://localhost:8082" };
-        //String[] serverUrls = { "http://132.227.115.112:8080", "http://132.227.115.111:8081",
-        //        "http://132.227.115.119:8082" };
+                "http://localhost:8082" };
+        // String[] serverUrls = { "http://132.227.115.112:8080",
+        // "http://132.227.115.111:8081",
+        // "http://132.227.115.119:8082" };
 
         // L'agrégation initiale est faite localement.
         // Map<Object, Object> aggregatedResults = (Map<Object, Object>)
@@ -305,24 +336,31 @@ public class DistributedService {
         return aggregatedResults;
     }
 
-    public void alterTableDistributed(String tableName, String columnName, String typeData) {
+    @SuppressWarnings("rawtypes")
+    public ResponseEntity alterTableDistributed(String tableName, String columnName, String typeData) {
         String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        //String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://132.227.115.111:8081",
+        // "http://132.227.115.119:8082" };
 
         DataType type = DataType.valueOf(typeData);
-        databaseManagementService.alterTable(tableName, columnName, type);
-        for (String serverUrl : serverUrls) {
-            try {
-                String url = serverUrl + "/databaseManagement/alterTable?tableName=" + tableName
-                        + "&columnName=" + columnName
-                        + "&typeData=" + typeData;
+        ResponseEntity response = databaseManagementService.alterTable(tableName, columnName, type);
 
-                restTemplate.exchange(url, HttpMethod.POST, null, Void.class);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            for (String serverUrl : serverUrls) {
+                try {
+                    String url = serverUrl + "/databaseManagement/alterTable?tableName=" + tableName
+                            + "&columnName=" + columnName
+                            + "&typeData=" + typeData;
 
-            } catch (Exception e) {
-                e.printStackTrace(); // Handle exception or log it
+                    restTemplate.exchange(url, HttpMethod.POST, null, Void.class);
+
+                } catch (Exception e) {
+                    e.printStackTrace(); // Handle exception or log it
+                }
             }
         }
+
+        return response;
     }
 
 }

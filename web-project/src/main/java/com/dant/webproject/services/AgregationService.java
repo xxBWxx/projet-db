@@ -1,6 +1,5 @@
 package com.dant.webproject.services;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,21 +70,22 @@ public class AgregationService {
 
     }
 
-//    public List<Map<String, Object>> sum(Column column, Column groupBy) {
-//
-//        Map<Object, Number> res = sumTmp(column, groupBy);
-//        List<Map<String, Object>> outputList = new ArrayList<>();
-//
-//        for (Map.Entry<Object, Number> entry : res.entrySet()) {
-//            Map<String, Object> map = new HashMap<>();
-//            map.put(groupBy.getName(), entry.getKey());
-//            map.put("SUM("+column.getName()+")", entry.getValue());
-//            outputList.add(map);
-//        }
-//
-//        return outputList;
-//    }
+    // public List<Map<String, Object>> sum(Column column, Column groupBy) {
+    //
+    // Map<Object, Number> res = sumTmp(column, groupBy);
+    // List<Map<String, Object>> outputList = new ArrayList<>();
+    //
+    // for (Map.Entry<Object, Number> entry : res.entrySet()) {
+    // Map<String, Object> map = new HashMap<>();
+    // map.put(groupBy.getName(), entry.getKey());
+    // map.put("SUM("+column.getName()+")", entry.getValue());
+    // outputList.add(map);
+    // }
+    //
+    // return outputList;
+    // }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public Map<Object, Object> max(Column c, Column groupBy) {
 
         List<Object> values = c.getValues();
@@ -112,6 +112,7 @@ public class AgregationService {
         return res;
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public Map<Object, Object> min(Column c, Column groupBy) {
 
         List<Object> values = c.getValues();
@@ -167,7 +168,6 @@ public class AgregationService {
             Object key = entry.getKey();
             Integer countValue = entry.getValue();
             Number sumValue = sum.get(key);
-
 
             // Calculer la moyenne pour cette clé
             if (sumValue != null && countValue != null && countValue != 0) {

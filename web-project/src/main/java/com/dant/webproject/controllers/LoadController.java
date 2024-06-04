@@ -20,8 +20,8 @@ public class LoadController {
     private LoadService loadService;
 
     @PostMapping("/loadFile")
-    public void loadFileToTable(HttpServletRequest request, @RequestParam String tableName)
+    public ResponseEntity<String> loadFileToTable(HttpServletRequest request, @RequestParam String tableName)
             throws IOException {
-        loadService.loadFileToTable(request, tableName);
+        return loadService.loadFileToTable(request, tableName);
     }
 }

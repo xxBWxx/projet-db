@@ -1,36 +1,47 @@
 package com.dant.webproject.services;
 
-import java.io.*;
-import java.lang.management.MemoryManagerMXBean;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
-import com.dant.webproject.dbcomponents.Column;
 import org.apache.commons.io.input.BoundedInputStream;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.parquet.column.page.PageReadStore;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroup;
 import org.apache.parquet.example.data.simple.convert.GroupRecordConverter;
 import org.apache.parquet.hadoop.ParquetFileReader;
-import org.apache.parquet.hadoop.metadata.ParquetMetadata;
-import org.apache.parquet.hadoop.util.HadoopInputFile;
-import org.apache.parquet.io.*;
+import org.apache.parquet.io.ColumnIOFactory;
+import org.apache.parquet.io.InputFile;
+import org.apache.parquet.io.MessageColumnIO;
+import org.apache.parquet.io.RecordReader;
+import org.apache.parquet.io.SeekableInputStream;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import com.dant.webproject.dbcomponents.DataType;
-import org.springframework.web.client.RestTemplate;
 
 @Component
 public class ParquetService {
@@ -46,9 +57,6 @@ public class ParquetService {
     this.distributedService = distributedService;
     this.tableModificationService = tableModificationService;
   }
-
-  // private static final Logger logger =
-  // LoggerFactory.getLogger(Main.class.getName());
 
   private String getValueForField(SimpleGroup group, String fieldName, int position) {
     String res = "-";
@@ -171,7 +179,7 @@ public class ParquetService {
     }
   }
 
-  public void parseParquetFile(InputStream inputStream, String tableName) {
+  public ResponseEntity<String> parseParquetFile(InputStream inputStream, String tableName) {
     ExecutorService executor = Executors.newFixedThreadPool(3);
     List<Future<?>> futures = new ArrayList<>();
 
@@ -203,6 +211,8 @@ public class ParquetService {
       List<String> columns = null;
 
       List<String> values;
+
+      @SuppressWarnings("unchecked")
       List<List<String>>[] files = new List[2];
       files[0] = new ArrayList<>();
       files[1] = new ArrayList<>();
@@ -218,6 +228,8 @@ public class ParquetService {
       int serverIndex = 0;
       RecordReader<Group> recordReader;
       while ((pages = reader.readNextRowGroup()) != null) {
+        // long rows = pages.getRowCount();
+
         a++;
 
         recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema));
@@ -305,169 +317,17 @@ public class ParquetService {
         Thread.currentThread().interrupt();
       }
 
-      System.out.println("File data has been successfully loaded to database.");
+      return ResponseEntity.status(HttpStatus.OK)
+          .body("File successfully added to database.");
     } catch (IOException e) {
       e.printStackTrace();
-      System.out.println("File cannot be loaded to database.");
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body("File cannot be added to database.");
     } finally {
       try {
         if (inputStream != null) {
           inputStream.close();
         }
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-  }
-
-  public void parseParquetFile1(InputStream inputStream, String tableName) {
-    // ExecutorService executor = Executors.newFixedThreadPool(10); // Créer un pool
-    // de 2 threads
-    ExecutorService executor = new ThreadPoolExecutor(
-        5, 5,
-        0L, TimeUnit.MILLISECONDS,
-        new LinkedBlockingQueue<Runnable>());
-    try {
-      Files.copy(inputStream, new File("tempFile.parquet").toPath());
-
-      long start = System.currentTimeMillis();
-      ParquetFileReader reader = ParquetFileReader.open(
-          HadoopInputFile.fromPath(new Path("tempFile.parquet"), new Configuration()));
-      MessageType schema = reader.getFooter().getFileMetaData().getSchema();
-
-      int serverIndex;
-
-      List<DataType> types;
-      List<String> columns = null;
-
-      List<String> values;
-      List<List<String>>[] files = new List[2];
-      files[0] = new ArrayList<>();
-      files[1] = new ArrayList<>();
-
-      PageReadStore pages;
-
-      MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
-      long end1 = System.currentTimeMillis();
-      System.err.println("Time took " + (end1 - start));
-      long a = 0, b = 0;
-
-      start = System.currentTimeMillis();
-
-      int batchSize = 12000;
-      // 12000; 5 Thread 1 000 000 => 5.71 s
-      // 45000 batchSize; 10 Thread pour 3 000 000 de lignes => 20 secondes
-
-      // Runtime.getRuntime().availableProcessors();
-      while ((pages = reader.readNextRowGroup()) != null) {
-
-        a++;
-
-        RecordReader recordReader = columnIO.getRecordReader(
-            pages,
-            new GroupRecordConverter(schema));
-
-        // TODO: replace random number with rows
-        SimpleGroup simpleGroup;
-        for (int i = 0; i < 1000000; i++) {
-          simpleGroup = (SimpleGroup) recordReader.read();
-          b++;
-
-          if (i == 0) {
-            types = getTypesOfGroup(simpleGroup);
-            columns = getFieldNames(simpleGroup);
-
-            distributedService.addColumnColDistributed(tableName, columns, types);
-          }
-
-          if (i % 100 == 0) {
-            long endParse = System.currentTimeMillis();
-            System.out.println((endParse - start) + " ms for " + i);
-          }
-
-          values = new ArrayList<>();
-          for (int j = 0; j < columns.size(); j++) {
-            values.add(getValueForField(simpleGroup, columns.get(j), j));
-          }
-
-          serverIndex = i % 3;
-
-          if (serverIndex == 0) {
-            tableModificationService.insert(tableName, columns, values);
-            values.clear();
-            continue;
-          }
-
-          files[serverIndex - 1].add(values);
-          if (files[serverIndex - 1].size() >= batchSize) {
-            List<List<String>> tmp = files[serverIndex - 1];
-            final List<String> finalColumns = columns;
-            final int s = serverIndex - 1;
-            executor.submit(() -> sendBatch(tmp, s, tableName, finalColumns));
-            files[serverIndex - 1] = new ArrayList<>();
-          }
-
-          // if (serverIndex == 1) {
-          // file2.add(values);
-          // if (file2.size() >= batchSize) {
-          // List<List<String>> tmp = file2;
-          // final List<String> finalColumns = columns;
-          // executor.submit(() -> sendBatch(tmp, 0, tableName, finalColumns));
-          // file2 = new ArrayList<>();
-          // }
-          // continue;
-          // }
-          //
-          // if (serverIndex == 2) {
-          // file3.add(values);
-          // if (file3.size() >= batchSize) {
-          // List<List<String>> tmp = file3;
-          // final List<String> finalColumns = columns;
-          // executor.submit(() -> sendBatch(tmp, 1, tableName, finalColumns));
-          // file3 = new ArrayList<>();
-          // }
-          // }
-        }
-      }
-
-      final List<String> finalColumns = columns;
-      if (!files[0].isEmpty()) {
-        final List<List<String>> finalFile = files[0];
-        executor.submit(() -> sendBatch(finalFile, 0, tableName, finalColumns));
-      }
-
-      if (!files[1].isEmpty()) {
-        final List<List<String>> finalFile = files[1];
-        executor.submit(() -> sendBatch(finalFile, 1, tableName, finalColumns));
-      }
-
-      System.err.println(a + " " + b);
-      reader.close();
-
-      executor.shutdown();
-
-      try {
-        if (!executor.awaitTermination(60, TimeUnit.MINUTES)) {
-          executor.shutdownNow();
-          if (!executor.awaitTermination(60, TimeUnit.SECONDS))
-            System.err.println("Executor did not terminate");
-        }
-      } catch (InterruptedException ie) {
-        executor.shutdownNow();
-        Thread.currentThread().interrupt();
-      }
-
-      System.out.println("File data has been successfully loaded to database.");
-    } catch (IOException e) {
-      e.printStackTrace();
-
-      System.out.println("File cannot be loaded to database.");
-    } finally {
-      try {
-        if (inputStream != null) {
-          inputStream.close();
-        }
-
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -475,8 +335,9 @@ public class ParquetService {
   }
 
   private void sendBatch(List<List<String>> dataBatch, int serverIndex, String tableName, List<String> columns) {
-     String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-    //String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
+    String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+    // String[] serverUrls = { "http://132.227.115.111:8081",
+    // "http://132.227.115.119:8082" };
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
@@ -492,101 +353,6 @@ public class ParquetService {
     // Effectuer la requête HTTP POST
     restTemplate.exchange(insertUrl, HttpMethod.POST, requestEntity, Void.class);
     dataBatch.clear();
-  }
-
-  public void parseParquetFile2(String filePath, String tableName) {
-    try {
-      long start = System.currentTimeMillis();
-      ParquetFileReader reader = ParquetFileReader.open(
-          HadoopInputFile.fromPath(new Path(filePath), new Configuration()));
-      MessageType schema = reader.getFooter().getFileMetaData().getSchema();
-
-      int serverIndex;
-
-      List<DataType> types = new ArrayList<>();
-      List<String> columns = new ArrayList<>();
-      List<String> values;
-      // List<List<String>> valuesList = new ArrayList<>();
-
-      HttpHeaders headers = new HttpHeaders();
-      headers.setContentType(MediaType.APPLICATION_JSON);
-
-      PageReadStore pages;
-
-      MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
-      long end1 = System.currentTimeMillis();
-      System.err.println("Time took " + (end1 - start));
-      long a = 0, b = 0;
-
-      start = System.currentTimeMillis();
-      while ((pages = reader.readNextRowGroup()) != null) {
-
-        a++;
-        // long rows = pages.getRowCount();
-
-        RecordReader recordReader = columnIO.getRecordReader(
-            pages,
-            new GroupRecordConverter(schema));
-
-        // TODO: replace random number with rows
-        for (int i = 0; i < 800; i++) {
-          SimpleGroup simpleGroup = (SimpleGroup) recordReader.read();
-          b++;
-          if (i == 0) {
-            types = getTypesOfGroup(simpleGroup);
-            columns = getFieldNames(simpleGroup);
-
-            distributedService.createTableColDistributed(tableName, columns, types);
-          }
-          if (i % 100 == 0) {
-            long endParse = System.currentTimeMillis();
-            System.out.println((endParse - start) + " ms for " + i);
-          }
-
-          values = new ArrayList<>();
-          for (int j = 0; j < columns.size(); j++) {
-            values.add(getValueForField(simpleGroup, columns.get(j), j));
-          }
-
-          // System.err.println("Time took for parsing " + (endParse - end1));
-
-          serverIndex = i % 3;
-          distributedService.insertRowDistributed(tableName, columns, values, serverIndex);
-
-          // System.err.println("Time took for insert " + (endInsert - endParse));
-
-          // if (serverIndex == 0) {
-          // tableModificationService.insert(tableName, columns, values);
-          // }
-
-          // else {
-          // String url = serverUrls[serverIndex] + "/tableModification/insert?tableName="
-          // + tableName;
-
-          // // Construire le corps de la requête
-          // Map<String, Object> requestBody = new HashMap<>();
-          // requestBody.put("col_name", columns);
-          // requestBody.put("value", values);
-
-          // HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody,
-          // headers);
-
-          // // Effectuer la requête HTTP POST
-          // restTemplate.exchange(url, HttpMethod.POST, requestEntity, Void.class);
-          // }
-
-          // valuesList.add(values);
-        }
-
-        // distributedService.insertDistributed(tableName, columns, valuesList);
-      }
-      System.err.println(a + " " + b);
-      reader.close();
-    } catch (
-
-    IOException e) {
-      e.printStackTrace();
-    }
   }
 
   public String uploadFile(InputStream fileStream) throws IOException {

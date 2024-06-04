@@ -1,15 +1,13 @@
 package com.dant.webproject.controllers;
 
-import com.dant.webproject.dbcomponents.AgregationType;
-import com.dant.webproject.dbcomponents.DataType;
-import com.dant.webproject.services.AgregationService;
-import com.dant.webproject.services.SelectService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.dant.webproject.dbcomponents.AgregationType;
+import com.dant.webproject.services.AgregationService;
 
 @RestController
 @RequestMapping("/agregation")

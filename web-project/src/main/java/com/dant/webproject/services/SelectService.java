@@ -1,7 +1,6 @@
 package com.dant.webproject.services;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,9 +10,7 @@ import com.dant.webproject.dbcomponents.DataType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-
 import com.dant.webproject.dbcomponents.Column;
-import com.dant.webproject.dbcomponents.Operande;
 
 @Component
 public class SelectService implements ISelectService {
@@ -26,7 +23,7 @@ public class SelectService implements ISelectService {
         this.databaseManagementService = databaseManagementService;
     }
 
-    public void validate_condition(String tableName, List<String> colNames, List<List<String>> conditions){
+    public void validate_condition(String tableName, List<String> colNames, List<List<String>> conditions) {
         Map<String, Map<String, Column>> database = databaseManagementService.getDatabase();
         Map<String, Column> table = database.get(tableName);
 
@@ -51,7 +48,7 @@ public class SelectService implements ISelectService {
     }
 
     public List<Map<String, Object>> select(String tableName, List<String> colNames, List<List<String>> conditions) {
-        validate_condition(tableName,colNames,conditions);
+        validate_condition(tableName, colNames, conditions);
 
         Map<String, Map<String, Column>> database = databaseManagementService.getDatabase();
         Map<String, Column> table = database.get(tableName);
@@ -82,7 +79,7 @@ public class SelectService implements ISelectService {
 
             // Vérifier les conditions si spécifiées
             if (conditions != null && !conditions.isEmpty()) {
-                if (evaluateConditions(table,row, conditions)) {
+                if (evaluateConditions(table, row, conditions)) {
                     rows.add(row);
                 }
             } else {
@@ -93,9 +90,10 @@ public class SelectService implements ISelectService {
         return rows;
     }
 
-    private boolean evaluateConditions(Map<String, Column> table,Map<String, Object> row, List<List<String>> conditions) {
+    private boolean evaluateConditions(Map<String, Column> table, Map<String, Object> row,
+            List<List<String>> conditions) {
 
-        int compteur=0;
+        int compteur = 0;
         for (List<String> condition : conditions) {
             String columnName = condition.get(0);
             String operator = condition.get(1);
@@ -106,17 +104,17 @@ public class SelectService implements ISelectService {
 
             switch (operator) {
                 case "=":
-                    if (compareValues(value,operand,column.getType()) == 0) {
+                    if (compareValues(value, operand, column.getType()) == 0) {
                         compteur++;
                     }
                     break;
                 case ">":
-                    if (compareValues(value,operand,column.getType()) > 0) {
+                    if (compareValues(value, operand, column.getType()) > 0) {
                         compteur++;
                     }
                     break;
                 case "<":
-                    if (compareValues(value,operand,column.getType()) < 0) {
+                    if (compareValues(value, operand, column.getType()) < 0) {
                         compteur++;
                     }
                     break;
