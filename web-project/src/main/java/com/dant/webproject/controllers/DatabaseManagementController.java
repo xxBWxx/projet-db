@@ -38,4 +38,18 @@ public class DatabaseManagementController {
 
         return res;
     }
+
+    @GetMapping("/describeTable")
+    public List<Map<String, Object>> describeTable(String tableName) {
+        return databaseManagementService.describeTable(tableName);
+    }
+
+
+    @PostMapping("/alterTable")
+    public void alterTable(String tableName, String columnName, String typeData) {
+        DataType type = DataType.valueOf(typeData);
+        databaseManagementService.alterTable(tableName, columnName, type);
+    }
+
+
 }

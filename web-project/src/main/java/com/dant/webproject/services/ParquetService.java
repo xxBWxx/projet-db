@@ -223,7 +223,7 @@ public class ParquetService {
         recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema));
 
         SimpleGroup simpleGroup;
-        for (int i = 0; i < 1000000; i++) {
+        for (int i = 0; i < 10000; i++) {
           simpleGroup = (SimpleGroup) recordReader.read();
           b++;
 
@@ -475,8 +475,8 @@ public class ParquetService {
   }
 
   private void sendBatch(List<List<String>> dataBatch, int serverIndex, String tableName, List<String> columns) {
-    // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-    String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
+     String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+    //String[] serverUrls = { "http://132.227.115.111:8081", "http://132.227.115.119:8082" };
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);

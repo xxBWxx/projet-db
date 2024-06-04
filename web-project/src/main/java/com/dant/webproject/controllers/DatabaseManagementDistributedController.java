@@ -30,20 +30,24 @@ public class DatabaseManagementDistributedController {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseManagementDistributedController.class);
 
     @PostMapping("/createTableCol")
-    public ResponseEntity<String> createTableCol(@RequestParam String tableName,
+    public void createTableCol(@RequestParam String tableName,
             @RequestBody Map<String, Object> requestData) {
         LOGGER.info("Receiving request for the creation of table " + tableName);
         List<String> col_name = (List<String>) (requestData.get("col_name"));
         List<String> type_name = (List<String>) (requestData.get("type"));
         List<DataType> typeList = type_name.stream().map(DataType::valueOf).collect(Collectors.toList());
         distributedService.createTableColDistributed(tableName, col_name, typeList);
-        return ResponseEntity.ok("The table " + tableName + " was created successfully");
     }
 
     @PostMapping("/createTable")
-    public ResponseEntity<String> createTable(@RequestParam String tableName) {
+    public void createTable(@RequestParam String tableName) {
         LOGGER.info("Receiving request for the creation of table " + tableName);
         distributedService.createTableDistributed(tableName);
-        return ResponseEntity.ok("The table " + tableName + " was created successfully");
     }
+
+    @PostMapping("/alterTable")
+    public void alterTable(String tableName, String columnName, String typeData) {
+        distributedService.alterTableDistributed(tableName, columnName, typeData);
+    }
+
 }
