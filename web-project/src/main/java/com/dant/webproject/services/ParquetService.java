@@ -66,24 +66,6 @@ public class ParquetService {
     } catch (Exception e) {
       return res;
     }
-
-    /*
-     * int fieldCount = group.getType().getFieldCount();
-     * 
-     * for (int fieldIndex = 0; fieldIndex < fieldCount; fieldIndex++) {
-     * try {
-     * if (fieldName == group.getType().getFieldName(fieldIndex)) {
-     * res = group.getValueToString(fieldIndex, 0);
-     * 
-     * break;
-     * }
-     * } catch (Exception e) {
-     * break;
-     * }
-     * }
-     * 
-     * return res;
-     */
   }
 
   private List<String> getFieldNames(SimpleGroup group) {
@@ -180,7 +162,7 @@ public class ParquetService {
   }
 
   public ResponseEntity<String> parseParquetFile(InputStream inputStream, String tableName) {
-    ExecutorService executor = Executors.newFixedThreadPool(3);
+    ExecutorService executor = Executors.newFixedThreadPool(10);
     List<Future<?>> futures = new ArrayList<>();
 
     try (BoundedInputStream boundedInputStream = new BoundedInputStream(inputStream)) {
@@ -203,7 +185,6 @@ public class ParquetService {
         }
       };
 
-      long start = System.currentTimeMillis();
       ParquetFileReader reader = ParquetFileReader.open(inputFile);
       MessageType schema = reader.getFooter().getFileMetaData().getSchema();
 
@@ -219,35 +200,23 @@ public class ParquetService {
 
       PageReadStore pages;
       MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO(schema);
-      long end1 = System.currentTimeMillis();
-      System.err.println("Time took " + (end1 - start));
-      long a = 0, b = 0;
 
-      start = System.currentTimeMillis();
-      int batchSize = 12000;
+      int batchSize = 45000;
       int serverIndex = 0;
       RecordReader<Group> recordReader;
       while ((pages = reader.readNextRowGroup()) != null) {
         // long rows = pages.getRowCount();
 
-        a++;
-
         recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema));
 
         SimpleGroup simpleGroup;
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 3000000; i++) {
           simpleGroup = (SimpleGroup) recordReader.read();
-          b++;
 
           if (i == 0) {
             types = getTypesOfGroup(simpleGroup);
             columns = getFieldNames(simpleGroup);
             distributedService.addColumnColDistributed(tableName, columns, types);
-          }
-
-          if (i % 100 == 0) {
-            long endParse = System.currentTimeMillis();
-            System.out.println((endParse - start) + " ms for " + i);
           }
 
           values = new ArrayList<>();
@@ -294,7 +263,6 @@ public class ParquetService {
         futures.add(future);
       }
 
-      System.err.println(a + " " + b);
       reader.close();
 
       for (Future<?> future : futures) {
@@ -335,9 +303,8 @@ public class ParquetService {
   }
 
   private void sendBatch(List<List<String>> dataBatch, int serverIndex, String tableName, List<String> columns) {
-    String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-    // String[] serverUrls = { "http://132.227.115.111:8081",
-    // "http://132.227.115.119:8082" };
+    // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+    String[] serverUrls = { "http://132.227.114.34:8081", "http://132.227.114.35:8082" };
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);

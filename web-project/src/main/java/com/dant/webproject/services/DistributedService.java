@@ -40,13 +40,9 @@ public class DistributedService {
     }
 
     public void createTableColDistributed(String tableName, List<String> columns, List<DataType> types) {
-        // List<DataType> typeList =
-        // types.stream().map(DataType::valueOf).collect(Collectors.toList());
-
         databaseManagementService.createTableCol(tableName, columns, types);
-        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        // String[] serverUrls = { "http://132.227.115.111:8081",
-        // "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+        String[] serverUrls = { "http://132.227.114.34:8081", "http://132.227.114.35:8082" };
 
         // Headers pour la requête HTTP
         HttpHeaders headers = new HttpHeaders();
@@ -67,13 +63,9 @@ public class DistributedService {
     }
 
     public void addColumnColDistributed(String tableName, List<String> columns, List<DataType> types) {
-        // List<DataType> typeList =
-        // types.stream().map(DataType::valueOf).collect(Collectors.toList());
-
         tableModificationService.addColumn(tableName, columns, types);
-        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        // String[] serverUrls = { "http://132.227.115.111:8081",
-        // "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+        String[] serverUrls = { "http://132.227.114.34:8081", "http://132.227.114.35:8082" };
 
         // Headers pour la requête HTTP
         HttpHeaders headers = new HttpHeaders();
@@ -96,9 +88,8 @@ public class DistributedService {
     @SuppressWarnings("rawtypes")
     public ResponseEntity createTableDistributed(String tableName) {
         ResponseEntity response = databaseManagementService.createTable(tableName);
-        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        // String[] serverUrls = { "http://132.227.115.111:8081",
-        // "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+        String[] serverUrls = { "http://132.227.114.34:8081", "http://132.227.114.35:8082" };
 
         // Appel du point de terminaison sur chaque serveur
         if (response.getStatusCode() == HttpStatus.CREATED) {
@@ -113,9 +104,8 @@ public class DistributedService {
 
     public void insertDistributed(String tableName, List<String> columns, List<List<String>> valuesList) {
         int cpt = 0;
-        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        // String[] serverUrls = { "http://132.227.115.111:8081",
-        // "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+        String[] serverUrls = { "http://132.227.114.34:8081", "http://132.227.114.35:8082" };
 
         if (valuesList.size() == 1) {
             tableModificationService.insert(tableName, columns, valuesList.get(0));
@@ -150,9 +140,8 @@ public class DistributedService {
     }
 
     public void insertRowDistributed(String tableName, List<String> columns, List<String> value, int modulo) {
-        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        // String[] serverUrls = { "http://132.227.115.111:8081",
-        // "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+        String[] serverUrls = { "http://132.227.114.34:8081", "http://132.227.114.35:8082" };
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -180,9 +169,8 @@ public class DistributedService {
     public List<Map<String, Object>> select(String tableName, List<String> colNames, List<List<String>> conditions) {
 
         List<Map<String, Object>> res = selectService.select(tableName, colNames, conditions);
-        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        // String[] serverUrls = { "http://132.227.115.111:8081",
-        // "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+        String[] serverUrls = { "http://132.227.114.34:8081", "http://132.227.114.35:8082" };
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -216,9 +204,8 @@ public class DistributedService {
     public ResponseEntity updateColumnDistributed(String tableName, String columnName, String newData,
             String conditionColumn,
             Object conditionValue) {
-        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        // String[] serverUrls = { "http://132.227.115.111:8081",
-        // "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+        String[] serverUrls = { "http://132.227.114.34:8081", "http://132.227.114.35:8082" };
 
         ResponseEntity response = tableModificationService.updateColumn(tableName, columnName, newData, conditionColumn,
                 conditionValue);
@@ -246,9 +233,8 @@ public class DistributedService {
     @SuppressWarnings("rawtypes")
     public ResponseEntity deleteRowDistributed(String tableName, String conditionColumn,
             Object conditionValue) {
-        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        // String[] serverUrls = { "http://132.227.115.111:8081",
-        // "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+        String[] serverUrls = { "http://132.227.114.34:8081", "http://132.227.114.35:8082" };
 
         ResponseEntity response = tableModificationService.deleteRow(tableName, conditionColumn, conditionValue);
 
@@ -272,11 +258,10 @@ public class DistributedService {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Object agregationDistributed(AgregationType type, String nametable, String namecolumn, String groupByCol) {
-        String[] serverUrls = { "http://localhost:8080", "http://localhost:8081",
-                "http://localhost:8082" };
-        // String[] serverUrls = { "http://132.227.115.112:8080",
-        // "http://132.227.115.111:8081",
-        // "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://localhost:8080", "http://localhost:8081",
+        // "http://localhost:8082" };
+        String[] serverUrls = { "http://132.227.114.33:8080", "http://132.227.114.34:8081",
+                "http://132.227.114.35:8082" };
 
         // L'agrégation initiale est faite localement.
         // Map<Object, Object> aggregatedResults = (Map<Object, Object>)
@@ -338,9 +323,8 @@ public class DistributedService {
 
     @SuppressWarnings("rawtypes")
     public ResponseEntity alterTableDistributed(String tableName, String columnName, String typeData) {
-        String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
-        // String[] serverUrls = { "http://132.227.115.111:8081",
-        // "http://132.227.115.119:8082" };
+        // String[] serverUrls = { "http://localhost:8081", "http://localhost:8082" };
+        String[] serverUrls = { "http://132.227.114.34:8081", "http://132.227.114.35:8082" };
 
         DataType type = DataType.valueOf(typeData);
         ResponseEntity response = databaseManagementService.alterTable(tableName, columnName, type);
